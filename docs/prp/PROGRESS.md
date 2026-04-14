@@ -1,7 +1,7 @@
 # PRP Execution Progress
 
 **Branch:** `feature/player-prop-analytics`  
-**Last updated:** 2026-04-14 (PRP-03 done, PRP-04 done, PRP-05 done)  
+**Last updated:** 2026-04-14 (PRP-03 done, PRP-04 done, PRP-05 done, PRP-06 done)  
 **Executed by:** Claude Sonnet 4.6
 
 ---
@@ -15,15 +15,15 @@
 | PRP-03 | Next Game Detection | ✅ DONE | 3/3 pass |
 | PRP-04 | Odds API Service | ✅ DONE | 4/4 pass |
 | PRP-05 | NBA Stats Matchup Service | ✅ DONE | 4/4 pass |
-| PRP-06 | Confidence Engine | ⏳ READY | — |
-| PRP-07 | Props API Endpoint | 🔒 blocked by PRP-04, PRP-06 | — |
+| PRP-06 | Confidence Engine | ✅ DONE | 9/9 pass |
+| PRP-07 | Props API Endpoint | ⏳ READY | — |
 | PRP-08 | Matchup API Endpoint | ⏳ READY | — |
 | PRP-09 | Frontend API Client | 🔒 blocked by PRP-07, PRP-08 | — |
 | PRP-10 | ConfidenceMeter Component | 🔒 blocked by PRP-09 | — |
 | PRP-11 | PropsPage — Props Section | 🔒 blocked by PRP-09, PRP-10 | — |
 | PRP-12 | PropsPage — Matchup Section | 🔒 blocked by PRP-11 | — |
 | PRP-13 | PlayerPage Integration | 🔒 blocked by PRP-11 | — |
-| PRP-14 | Backtest Framework | 🔒 blocked by PRP-06 | — |
+| PRP-14 | Backtest Framework | ⏳ READY | — |
 
 ---
 
@@ -251,13 +251,61 @@ export function resetCache() { /* resets module-level cache — for testing only
 
 ---
 
+## Completed: PRP-06 — Confidence Engine
+
+### What was done
+- Created `backend/utils/confidence.js` with `computeConfidence()` export
+- Created `backend/tests/confidence.test.js` (9 unit tests, all pass)
+- Total test count after PRP-06: 30/30 pass
+
+### Implementation
+```js
+export function computeConfidence({ stats, statKey, line, isHome, matchupRow, archetype, opponentId }) {
+  // Returns { score: 0–100, tier: 'high'|'medium'|'low'|'against', factors: { hit_rate, form, home_away, matchup } }
+  // Pure synchronous function — no fetch calls
+}
+```
+
+### Four factors
+| Factor | Weight | Score source |
+|--------|--------|-------------|
+| Hit Rate (F1) | 35% | count(stat > line) / n × 100 |
+| Form Trend (F2) | 25% | `trend()` form ± 5 for direction |
+| Home/Away (F3) | 20% | normalCDF((avg − line) / stddev) × 100 |
+| Matchup (F4) | 20% | NBA.com FG% z-score; neutral 50 fallback |
+
+### Critical discoveries
+**`trend()` returns `form: NaN` when stats lack `ast`/`fg_pct` fields.**
+The form calculation in `analytics.js` uses `r.pts * 1.5 + r.ast * 2 + r.reb * 1 + r.fg_pct * 30`.
+Missing fields cause NaN propagation. Fix: when `trend().form` is NaN, compute pts+reb-only fallback:
+`formVal = min(100, round(avgPts * 1.5 + avgReb * 1))`
+
+**Seeded `teamDefensiveProfile()` score is too noisy without real possession data.**
+The original PRP suggested using the seeded profile multiplier when no NBA.com data is available.
+In practice, the seeded values (e.g. `vs_big = 0.908` for teamId=7) produce misleading matchup scores
+that conflict with clear hit-rate signals. Fix: when no `matchupRow.fg_pct`, return neutral 50.
+Real possession data (PRP-05 / `getMatchup()`) is required for a meaningful matchup score.
+
+**Stddev floor prevents division-by-zero:**
+- `pts` floor = 4.0 (NBA scoring noise)
+- `reb` floor = 2.0
+
+### Files changed
+| File | Change |
+|------|--------|
+| `backend/utils/confidence.js` | NEW — `computeConfidence()` |
+| `backend/tests/confidence.test.js` | NEW — 9 unit tests |
+
+---
+
 ## What's Unblocked Now
 
-PRP-01 ✅ + PRP-02 ✅ + PRP-03 ✅ + PRP-04 ✅ + PRP-05 ✅ unblock:
+PRP-01 ✅ + PRP-02 ✅ + PRP-03 ✅ + PRP-04 ✅ + PRP-05 ✅ + PRP-06 ✅ unblock:
 
-- **PRP-06** (Confidence Engine) — ready to run (unblocked by PRP-01 + PRP-02 + PRP-03 + PRP-04)
-- **PRP-08** (Matchup API Endpoint) — ready to run (unblocked by PRP-05)
-- Both can run in parallel (independent of each other)
+- **PRP-07** (Props API Endpoint) — fully unblocked (was waiting on PRP-04 + PRP-06)
+- **PRP-08** (Matchup API Endpoint) — fully unblocked (was waiting on PRP-05)
+- **PRP-14** (Backtest Framework) — fully unblocked (was waiting on PRP-06)
+- PRP-07 and PRP-08 can run in parallel (independent of each other)
 
 ---
 
@@ -270,9 +318,9 @@ For each PRP, follow the TDD cycle exactly as written in the PRP file:
 4. Commit: `git add <files> && git commit -m "feat: PRP-XX — ..."`
 5. Push: `git push`
 
-**Next PRPs (both independent — can run in parallel):**
+**Next PRPs (PRP-07 and PRP-08 are independent — can run in parallel):**
 ```
-Execute PRP-06: read docs/prp/06_PRP_CONFIDENCE-ENGINE.md fully,
+Execute PRP-07: read docs/prp/07_PRP_PROPS-API-ENDPOINT.md fully,
 follow the TDD cycle (write test first → RED → implement → GREEN),
 confirm all acceptance criteria. Check PROGRESS.md for context.
 ```
