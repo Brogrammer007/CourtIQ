@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 64" width="240" height="64" role="img" aria-label="CourtIQ">
+  <defs>
+    <linearGradient id="ciq-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+    <filter id="ciq-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="240" height="64" fill="#0B0F1A" rx="12"/>
+  <!-- Mark: basketball-inspired Q -->
+  <g transform="translate(12,8)" filter="url(#ciq-glow)">
+    <circle cx="24" cy="24" r="20" fill="none" stroke="url(#ciq-grad)" stroke-width="3"/>
+    <!-- Basketball seams -->
+    <path d="M24 4 V44" stroke="url(#ciq-grad)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M4 24 H44" stroke="url(#ciq-grad)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M10 10 Q24 24 38 38" stroke="url(#ciq-grad)" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.75"/>
+    <!-- Q tail -->
+    <path d="M34 34 L46 46" stroke="url(#ciq-grad)" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <!-- Wordmark -->
+  <g transform="translate(74,42)" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-weight="700" font-size="26" fill="#E5E7EB">
+    <text>Court<tspan fill="url(#ciq-grad)">IQ</tspan></text>
+  </g>
+</svg>

@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: courtiq-api
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 4000
+      - key: CACHE_TTL_SECONDS
+        value: 60
+      - key: CORS_ORIGIN
+        value: "*"

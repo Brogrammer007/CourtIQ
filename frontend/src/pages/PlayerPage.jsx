@@ -1,0 +1,210 @@
+import { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import {
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  BarChart, Bar,
+} from 'recharts';
+import { api } from '../lib/api.js';
+import { useStore } from '../store/useStore.js';
+import StatTile from '../components/StatTile.jsx';
+import { SkeletonCard, SkeletonLine } from '../components/Skeleton.jsx';
+import VsTeamSection from '../components/VsTeamSection.jsx';
+
+export default function PlayerPage() {
+  const { id } = useParams();
+  const { isFavorite, toggleFavorite } = useStore();
+  const fav = isFavorite(Number(id)) || isFavorite(id);
+
+  const [player, setPlayer] = useState(null);
+  const [statsRes, setStatsRes] = useState(null);
+  const [err, setErr] = useState(null);
+
+  useEffect(() => {
+    let cancel = false;
+    setPlayer(null); setStatsRes(null);
+    Promise.all([api.player(id), api.stats(id)])
+      .then(([p, s]) => {
+        if (cancel) return;
+        setPlayer(p.data); setStatsRes(s);
+      })
+      .catch((e) => !cancel && setErr(e.message));
+    const iv = setInterval(() => {
+      api.stats(id).then((s) => !cancel && setStatsRes(s)).catch(() => {});
+    }, 10000);
+    return () => { cancel = true; clearInterval(iv); };
+  }, [id]);
+
+  if (err) return <div className="mx-auto max-w-5xl px-6 py-10 text-rose-300">⚠ {err}</div>;
+  if (!player) return (
+    <div className="mx-auto max-w-5xl px-6 py-10 space-y-6">
+      <SkeletonCard lines={2} />
+      <div className="grid grid-cols-4 gap-4"><SkeletonCard/><SkeletonCard/><SkeletonCard/><SkeletonCard/></div>
+    </div>
+  );
+
+  const stats = statsRes?.data ?? [];
+  const avgs = statsRes?.averages;
+  const trend = statsRes?.trend;
+  const pred = statsRes?.prediction;
+
+  // Chronological for charts
+  const chartData = [...stats].reverse().map((s, i) => ({
+    g: s.date ? s.date.slice(5) : `G${i + 1}`,
+    pts: s.pts, ast: s.ast, reb: s.reb,
+  }));
+
+  return (
+    <div className="mx-auto max-w-6xl px-6 py-10">
+      <Link to="/app" className="text-sm text-slate-400 hover:text-white inline-flex items-center gap-1.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        Back to dashboard
+      </Link>
+
+      <div className="mt-6 glass p-6 md:p-8 flex flex-wrap items-center gap-6">
+        <div className="w-20 h-20 rounded-2xl bg-grad-primary flex items-center justify-center text-2xl font-extrabold text-white shadow-glow">
+          {player.first_name?.[0]}{player.last_name?.[0]}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-3xl font-bold tracking-tight">
+            {player.first_name} {player.last_name}
+          </h1>
+          <div className="text-slate-400 mt-1">
+            {player.team?.full_name} · {player.position || '—'} · {player.height || '—'} · {player.weight || '—'} lbs
+          </div>
+          {trend && (
+            <div className="mt-3 inline-flex items-center gap-2 chip">
+              <span className={trend.direction === 'up' ? 'text-emerald-300' : trend.direction === 'down' ? 'text-rose-300' : 'text-slate-300'}>
+                {trend.direction === 'up' ? '▲' : trend.direction === 'down' ? '▼' : '•'} {trend.direction.toUpperCase()}
+              </span>
+              <span>Form {trend.form}/100</span>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={() => toggleFavorite(Number(id))}
+          className={`btn-ghost ${fav ? 'text-yellow-300 border-yellow-400/40 bg-yellow-400/10' : ''}`}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8"><path d="M12 3l2.8 6.1 6.7.8-5 4.7 1.4 6.7L12 17.9 6.1 21.3l1.4-6.7-5-4.7 6.7-.8L12 3z" strokeLinejoin="round"/></svg>
+          {fav ? 'Favorited' : 'Add to Favorites'}
+        </button>
+      </div>
+
+      {/* Stat tiles */}
+      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatTile label="PPG" value={avgs?.pts ?? '—'} trend={trend?.delta} />
+        <StatTile label="APG" value={avgs?.ast ?? '—'} accent="secondary" />
+        <StatTile label="RPG" value={avgs?.reb ?? '—'} />
+        <StatTile label="FG%" value={avgs ? (avgs.fg_pct * 100).toFixed(1) : '—'} suffix="%" accent="secondary" />
+      </div>
+
+      {/* Charts */}
+      <div className="mt-6 grid lg:grid-cols-2 gap-5">
+        <div className="glass p-5">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">Points trend</h3>
+            <span className="text-xs text-slate-400">Last {stats.length} games</span>
+          </div>
+          <div className="h-64 mt-3">
+            <ResponsiveContainer>
+              <LineChart data={chartData}>
+                <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+                <XAxis dataKey="g" stroke="#64748B" fontSize={11} tickLine={false} />
+                <YAxis stroke="#64748B" fontSize={11} tickLine={false} />
+                <Tooltip contentStyle={{ background: '#0B0F1A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
+                <Line type="monotone" dataKey="pts" stroke="#8B5CF6" strokeWidth={2.5} dot={{ r: 3, fill: '#8B5CF6' }} activeDot={{ r: 5 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="glass p-5">
+          <h3 className="font-semibold">Assists & Rebounds</h3>
+          <div className="h-64 mt-3">
+            <ResponsiveContainer>
+              <BarChart data={chartData}>
+                <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+                <XAxis dataKey="g" stroke="#64748B" fontSize={11} tickLine={false} />
+                <YAxis stroke="#64748B" fontSize={11} tickLine={false} />
+                <Tooltip contentStyle={{ background: '#0B0F1A', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }} />
+                <Bar dataKey="ast" fill="#22D3EE" radius={[6,6,0,0]} />
+                <Bar dataKey="reb" fill="#8B5CF6" radius={[6,6,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Insights + Prediction */}
+      <div className="mt-6 grid lg:grid-cols-2 gap-5">
+        <div className="glass p-5">
+          <h3 className="font-semibold">Smart Insights</h3>
+          <ul className="mt-3 space-y-2 text-sm text-slate-300">
+            {trend && (
+              <li>
+                • Current form is <b className="text-white">{trend.form}/100</b>, trending <b className="text-white">{trend.direction}</b>
+                {trend.delta !== 0 && <> ({trend.delta > 0 ? '+' : ''}{trend.delta} PTS vs prior 5)</>}.
+              </li>
+            )}
+            {avgs && (
+              <li>• Averaging <b>{avgs.pts} / {avgs.reb} / {avgs.ast}</b> on <b>{(avgs.fg_pct*100).toFixed(1)}%</b> FG.</li>
+            )}
+            {pred && (
+              <li>• Model projects <b className="gradient-text">{pred.expected_points}</b> points next game.</li>
+            )}
+          </ul>
+        </div>
+
+        <div className="glass p-5">
+          <h3 className="font-semibold">Prediction</h3>
+          {pred ? (
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              <div className="rounded-xl bg-white/[0.04] border border-white/10 p-3">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Expected PTS</div>
+                <div className="text-2xl font-bold gradient-text mt-1">{pred.expected_points}</div>
+              </div>
+              <div className="rounded-xl bg-white/[0.04] border border-white/10 p-3">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Over {pred.line}</div>
+                <div className="text-2xl font-bold text-emerald-300 mt-1">{pred.over_probability}%</div>
+              </div>
+              <div className="rounded-xl bg-white/[0.04] border border-white/10 p-3">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Under {pred.line}</div>
+                <div className="text-2xl font-bold text-rose-300 mt-1">{pred.under_probability}%</div>
+              </div>
+            </div>
+          ) : (
+            <SkeletonLine className="w-1/2 mt-3" />
+          )}
+        </div>
+      </div>
+
+      {/* Matchup analytics: player vs team + team weakness */}
+      <VsTeamSection playerId={id} player={player} />
+
+      {/* Recent game log */}
+      <div className="mt-6 glass p-5">
+        <h3 className="font-semibold">Recent games</h3>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-left text-slate-400 text-xs uppercase tracking-wider">
+              <tr className="border-b border-white/10">
+                <th className="py-2 pr-3">Date</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>FG%</th><th>3P%</th><th>MIN</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.map((s, i) => (
+                <tr key={i} className="border-b border-white/5 hover:bg-white/[0.03]">
+                  <td className="py-2 pr-3 text-slate-300">{s.date || '—'}</td>
+                  <td className="font-semibold">{s.pts}</td>
+                  <td>{s.reb}</td><td>{s.ast}</td><td>{s.stl}</td><td>{s.blk}</td>
+                  <td>{(s.fg_pct*100).toFixed(0)}%</td>
+                  <td>{(s.fg3_pct*100).toFixed(0)}%</td>
+                  <td>{s.min}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
