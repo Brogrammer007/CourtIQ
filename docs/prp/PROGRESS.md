@@ -1,7 +1,7 @@
 # PRP Execution Progress
 
 **Branch:** `feature/player-prop-analytics`  
-**Last updated:** 2026-04-14 (PRP-03 done, PRP-04 done)  
+**Last updated:** 2026-04-14 (PRP-03 done, PRP-04 done, PRP-05 done)  
 **Executed by:** Claude Sonnet 4.6
 
 ---
@@ -14,10 +14,10 @@
 | PRP-02 | Home/Away Split Utility | ✅ DONE | 10/10 pass |
 | PRP-03 | Next Game Detection | ✅ DONE | 3/3 pass |
 | PRP-04 | Odds API Service | ✅ DONE | 4/4 pass |
-| PRP-05 | NBA Stats Matchup Service | ⏳ READY | — |
+| PRP-05 | NBA Stats Matchup Service | ✅ DONE | 4/4 pass |
 | PRP-06 | Confidence Engine | ⏳ READY | — |
 | PRP-07 | Props API Endpoint | 🔒 blocked by PRP-04, PRP-06 | — |
-| PRP-08 | Matchup API Endpoint | 🔒 blocked by PRP-05 | — |
+| PRP-08 | Matchup API Endpoint | ⏳ READY | — |
 | PRP-09 | Frontend API Client | 🔒 blocked by PRP-07, PRP-08 | — |
 | PRP-10 | ConfidenceMeter Component | 🔒 blocked by PRP-09 | — |
 | PRP-11 | PropsPage — Props Section | 🔒 blocked by PRP-09, PRP-10 | — |
@@ -216,12 +216,47 @@ export async function getPlayerProps(playerName) {
 
 ---
 
+## Completed: PRP-05 — NBA Stats Matchup Service
+
+### What was done
+- Created `backend/services/nbaStats.js` with `getMatchup(espnOffPlayer, espnDefPlayer)` and `resetCache()` exports
+- Created `backend/tests/nba-stats.test.js` (4 unit tests, all pass)
+- Total test count after PRP-05: 21/21 pass
+
+### Implementation
+```js
+export async function getMatchup(espnOffPlayer, espnDefPlayer) {
+  // Fetches stats.nba.com matchupsrollup dataset, caches for 24h
+  // Cross-references ESPN player objects { first_name, last_name } via normName()
+  // Returns row with: games_played, partial_possessions, player_pts, fg_pct, def_reb
+  // Returns null if no shared matchup data; throws Error('MATCHUP_UNAVAILABLE') on fetch failure
+}
+export function resetCache() { /* resets module-level cache — for testing only */ }
+```
+
+### Key behaviors confirmed
+- `normName` imported from `./odds.js` — not redefined
+- Diacritic normalization: `"Nikola Jokić"` matches `"Nikola Jokic"` in NBA.com feed
+- Dataset fetched once per 24h; subsequent calls use in-memory cache
+- Dynamic column mapping via `idx` object — safe against NBA.com column renames
+- `DEF_REB` → `TEAM_REB` fallback chain supported
+- `resetCache()` exported for test isolation (test 4 needs cold cache)
+- `undici` attempted at runtime for TLS bypass; falls back to native fetch with warning
+
+### Files changed
+| File | Change |
+|------|--------|
+| `backend/services/nbaStats.js` | NEW — `getMatchup()` + `resetCache()` |
+| `backend/tests/nba-stats.test.js` | NEW — 4 unit tests |
+
+---
+
 ## What's Unblocked Now
 
-PRP-01 ✅ + PRP-02 ✅ + PRP-03 ✅ + PRP-04 ✅ unblock:
+PRP-01 ✅ + PRP-02 ✅ + PRP-03 ✅ + PRP-04 ✅ + PRP-05 ✅ unblock:
 
-- **PRP-05** (NBA Stats Matchup Service) — ready to run
-- **PRP-06** (Confidence Engine) — ready to run
+- **PRP-06** (Confidence Engine) — ready to run (unblocked by PRP-01 + PRP-02 + PRP-03 + PRP-04)
+- **PRP-08** (Matchup API Endpoint) — ready to run (unblocked by PRP-05)
 - Both can run in parallel (independent of each other)
 
 ---
@@ -237,12 +272,12 @@ For each PRP, follow the TDD cycle exactly as written in the PRP file:
 
 **Next PRPs (both independent — can run in parallel):**
 ```
-Execute PRP-05: read docs/prp/05_PRP_NBA-STATS-MATCHUP-SERVICE.md fully,
+Execute PRP-06: read docs/prp/06_PRP_CONFIDENCE-ENGINE.md fully,
 follow the TDD cycle (write test first → RED → implement → GREEN),
 confirm all acceptance criteria. Check PROGRESS.md for context.
 ```
 ```
-Execute PRP-06: read docs/prp/06_PRP_CONFIDENCE-ENGINE.md fully,
+Execute PRP-08: read docs/prp/08_PRP_MATCHUP-API-ENDPOINT.md fully,
 follow the TDD cycle (write test first → RED → implement → GREEN),
 confirm all acceptance criteria. Check PROGRESS.md for context.
 ```
