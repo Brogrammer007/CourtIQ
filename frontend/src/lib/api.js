@@ -16,4 +16,6 @@ export const api = {
   teams: () => j('/teams'),
   vsTeam: (id, teamId) => j(`/player/${id}/vs-team/${teamId}`),
   weakness: (teamId) => j(`/team/${teamId}/weakness`),
+  props: (id) => j(`/player/${id}/props`),
+  defensiveMatchup: (offId, defId) => j(`/player/${offId}/matchup/${defId}`),
 };
