@@ -98,6 +98,153 @@ function PropCard({ title, prop }) {
   );
 }
 
+function MatchupSection({ offenderId }) {
+  const [query,    setQuery]    = useState('');
+  const [results,  setResults]  = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [matchup,  setMatchup]  = useState(null);
+  const [status,   setStatus]   = useState('idle'); // idle|searching|loading|data|no_data|error
+
+  // Debounced search
+  useEffect(() => {
+    if (!query.trim()) { setResults([]); return; }
+    setStatus('searching');
+    const timer = setTimeout(() => {
+      api.search(query)
+        .then((r) => { setResults(r.data || []); setStatus('idle'); })
+        .catch(() => { setResults([]); setStatus('idle'); });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  function handleAnalyze() {
+    if (!selected) return;
+    setStatus('loading');
+    setMatchup(null);
+    api.defensiveMatchup(offenderId, selected.id)
+      .then((d) => { setMatchup(d); setStatus('data'); })
+      .catch((e) => {
+        setStatus(e.message.includes('503') || e.message.includes('unavailable') ? 'error' : 'no_data');
+      });
+  }
+
+  const diffColor = (pct) => {
+    if (pct == null) return 'text-slate-400';
+    return pct >= 0 ? 'text-rose-300' : 'text-emerald-300';
+  };
+
+  return (
+    <div className="glass p-5 space-y-5">
+      <h3 className="font-semibold text-sm uppercase tracking-widest text-slate-400">
+        Defensive Matchup
+      </h3>
+
+      {/* Search */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Search defender..."
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setSelected(null); setMatchup(null); }}
+            className="w-full rounded-xl bg-white/[0.06] border border-white/10 px-4 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-violet-500/50"
+          />
+          {/* Dropdown */}
+          {results.length > 0 && !selected && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-[#111827] border border-white/10 rounded-xl overflow-hidden z-10 max-h-48 overflow-y-auto">
+              {results.slice(0, 8).map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => { setSelected(p); setQuery(`${p.first_name} ${p.last_name}`); setResults([]); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-white/[0.08] transition-colors"
+                >
+                  {p.first_name} {p.last_name}
+                  <span className="ml-2 text-slate-500 text-xs">{p.team?.full_name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={handleAnalyze}
+          disabled={!selected || status === 'loading'}
+          className="btn-ghost disabled:opacity-40"
+        >
+          Analyze
+        </button>
+      </div>
+
+      {/* Result states */}
+      {status === 'idle' && !matchup && (
+        <p className="text-sm text-slate-500">Search for a defender to analyze the matchup.</p>
+      )}
+
+      {status === 'loading' && <div className="space-y-2"><SkeletonLine /><SkeletonLine /></div>}
+
+      {status === 'no_data' && (
+        <p className="text-sm text-slate-400">No matchup data found between these players this season.</p>
+      )}
+
+      {status === 'error' && (
+        <p className="text-sm text-rose-300">Matchup data temporarily unavailable.</p>
+      )}
+
+      {status === 'data' && matchup && (
+        <div className="space-y-4">
+          {/* Verdict badge */}
+          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border ${
+            matchup.verdict.tone === 'down'
+              ? 'bg-cyan-400/10 border-cyan-400/30 text-cyan-300'
+              : matchup.verdict.tone === 'up'
+              ? 'bg-emerald-400/10 border-emerald-400/30 text-emerald-300'
+              : 'bg-slate-700 border-white/10 text-slate-300'
+          }`}>
+            {matchup.verdict.emoji} {matchup.verdict.label}
+          </div>
+
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: 'Possessions', value: matchup.matchup_data.partial_possessions },
+              { label: 'PTS/Poss',    value: matchup.matchup_data.pts_per_possession ?? '—' },
+              { label: 'FG% Allowed', value: matchup.matchup_data.fg_pct_allowed != null
+                  ? `${(matchup.matchup_data.fg_pct_allowed * 100).toFixed(1)}%` : '—' },
+              { label: 'DEF REB',     value: matchup.matchup_data.def_reb_in_matchup ?? '—' },
+            ].map(({ label, value }) => (
+              <div key={label} className="rounded-xl bg-white/[0.04] border border-white/10 p-3 text-center">
+                <div className="text-[10px] uppercase tracking-widest text-slate-500">{label}</div>
+                <div className="text-lg font-bold mt-1">{value}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* vs season avg */}
+          <div className="text-xs text-slate-400 space-x-4">
+            {matchup.vs_season_avg.pts_diff_pct != null && (
+              <span>
+                PTS vs season avg:{' '}
+                <span className={diffColor(matchup.vs_season_avg.pts_diff_pct)}>
+                  {matchup.vs_season_avg.pts_diff_pct > 0 ? '+' : ''}{matchup.vs_season_avg.pts_diff_pct}%
+                </span>
+              </span>
+            )}
+            {matchup.vs_season_avg.fg_pct_diff_pct != null && (
+              <span>
+                FG% vs season avg:{' '}
+                <span className={diffColor(matchup.vs_season_avg.fg_pct_diff_pct)}>
+                  {matchup.vs_season_avg.fg_pct_diff_pct > 0 ? '+' : ''}{matchup.vs_season_avg.fg_pct_diff_pct}%
+                </span>
+              </span>
+            )}
+          </div>
+
+          <p className="text-xs text-slate-600">{matchup.matchup_data.sample_note}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PropsPage() {
   const { id } = useParams();
   const [data, setData]   = useState(null);
@@ -162,6 +309,9 @@ export default function PropsPage() {
         <PropCard title="Points" prop={props?.points} />
         <PropCard title="Rebounds" prop={props?.rebounds} />
       </div>
+
+      {/* Defensive Matchup */}
+      <MatchupSection offenderId={id} />
     </div>
   );
 }

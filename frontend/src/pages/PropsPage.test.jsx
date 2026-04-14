@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 // Mock api module
 vi.mock('../lib/api.js', () => ({
   api: {
-    props: vi.fn(),
+    props:            vi.fn(),
+    search:           vi.fn(),
+    defensiveMatchup: vi.fn(),
   },
 }));
 
@@ -107,5 +109,66 @@ describe('PropsPage', () => {
       const link = screen.getByRole('link', { name: /back/i });
       expect(link).toHaveAttribute('href', '/player/3112335');
     });
+  });
+});
+
+describe('PropsPage — matchup section', () => {
+  beforeEach(() => {
+    api.props.mockResolvedValue(MOCK_PROPS_RESPONSE);
+    api.search.mockReset();
+    api.defensiveMatchup.mockReset();
+  });
+
+  it('renders the defensive matchup section heading', async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText('Nikola Jokic')).toBeInTheDocument());
+    expect(screen.getByText(/defensive matchup/i)).toBeInTheDocument();
+  });
+
+  it('shows search results when typing a defender name', async () => {
+    api.search.mockResolvedValue({
+      data: [{ id: 1631104, first_name: 'Victor', last_name: 'Wembanyama', team: { full_name: 'Spurs' } }],
+    });
+
+    renderPage();
+    await waitFor(() => screen.getByText('Nikola Jokic'));
+
+    const input = screen.getByPlaceholderText(/search defender/i);
+    fireEvent.change(input, { target: { value: 'Wemb' } });
+
+    await waitFor(() =>
+      expect(screen.getByText('Victor Wembanyama')).toBeInTheDocument()
+    );
+  });
+
+  it('shows matchup data when Analyze is clicked', async () => {
+    api.search.mockResolvedValue({
+      data: [{ id: 1631104, first_name: 'Victor', last_name: 'Wembanyama', team: { full_name: 'Spurs' } }],
+    });
+    api.defensiveMatchup.mockResolvedValue({
+      offender: { id: 3112335, name: 'Nikola Jokic' },
+      defender: { id: 1631104, name: 'Victor Wembanyama' },
+      matchup_data: {
+        games_played: 3, partial_possessions: 42,
+        pts_per_possession: 0.87, fg_pct_allowed: 0.461,
+        def_reb_in_matchup: 8,
+        sample_note: '42 possessions across 3 games',
+      },
+      vs_season_avg: { pts_diff_pct: -12.4, fg_pct_diff_pct: -8.7 },
+      verdict: { label: 'Tough matchup', tone: 'down', emoji: '🧊' },
+    });
+
+    renderPage();
+    await waitFor(() => screen.getByText('Nikola Jokic'));
+
+    const input = screen.getByPlaceholderText(/search defender/i);
+    fireEvent.change(input, { target: { value: 'Wemb' } });
+    await waitFor(() => screen.getByText('Victor Wembanyama'));
+
+    fireEvent.click(screen.getByText('Victor Wembanyama'));
+    fireEvent.click(screen.getByRole('button', { name: /analyze/i }));
+
+    await waitFor(() => expect(screen.getByText(/tough matchup/i)).toBeInTheDocument());
+    expect(screen.getByText('42 possessions across 3 games')).toBeInTheDocument();
   });
 });
