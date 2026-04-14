@@ -7,6 +7,7 @@ import PlayerPage from './pages/PlayerPage.jsx';
 import Favorites from './pages/Favorites.jsx';
 import Compare from './pages/Compare.jsx';
 import Predictions from './pages/Predictions.jsx';
+import PropsPage from './pages/PropsPage.jsx';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/app" element={<Dashboard />} />
           <Route path="/app/player/:id" element={<PlayerPage />} />
+          <Route path="/player/:id/props" element={<PropsPage />} />
           <Route path="/app/favorites" element={<Favorites />} />
           <Route path="/app/compare" element={<Compare />} />
           <Route path="/app/predictions" element={<Predictions />} />

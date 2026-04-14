@@ -87,6 +87,15 @@ export default function PlayerPage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8"><path d="M12 3l2.8 6.1 6.7.8-5 4.7 1.4 6.7L12 17.9 6.1 21.3l1.4-6.7-5-4.7 6.7-.8L12 3z" strokeLinejoin="round"/></svg>
           {fav ? 'Favorited' : 'Add to Favorites'}
         </button>
+        <Link
+          to={`/player/${id}/props`}
+          className="btn-ghost"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 20V10M12 20V4M6 20v-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Props & Confidence
+        </Link>
       </div>
 
       {/* Stat tiles */}
