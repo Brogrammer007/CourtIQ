@@ -1,7 +1,7 @@
 # PRP Execution Progress
 
 **Branch:** `feature/player-prop-analytics`  
-**Last updated:** 2026-04-14  
+**Last updated:** 2026-04-14 (PRP-02 done)  
 **Executed by:** Claude Sonnet 4.6
 
 ---
@@ -11,12 +11,12 @@
 | PRP | Name | Status | Tests |
 |-----|------|--------|-------|
 | PRP-01 | ESPN Home/Away Extension | ✅ DONE | 3/3 pass |
-| PRP-02 | Home/Away Split Utility | ⏳ NEXT | — |
+| PRP-02 | Home/Away Split Utility | ✅ DONE | 10/10 pass |
 | PRP-03 | Next Game Detection | ⏳ READY | — |
 | PRP-04 | Odds API Service | ⏳ READY | — |
 | PRP-05 | NBA Stats Matchup Service | 🔒 blocked by PRP-04 | — |
-| PRP-06 | Confidence Engine | 🔒 blocked by PRP-01 ✅, PRP-02 | — |
-| PRP-07 | Props API Endpoint | 🔒 blocked by PRP-01 ✅, PRP-02, PRP-03, PRP-04, PRP-06 | — |
+| PRP-06 | Confidence Engine | 🔒 blocked by PRP-03, PRP-04 | — |
+| PRP-07 | Props API Endpoint | 🔒 blocked by PRP-03, PRP-04, PRP-06 | — |
 | PRP-08 | Matchup API Endpoint | 🔒 blocked by PRP-05 | — |
 | PRP-09 | Frontend API Client | 🔒 blocked by PRP-07, PRP-08 | — |
 | PRP-10 | ConfidenceMeter Component | 🔒 blocked by PRP-09 | — |
@@ -92,17 +92,49 @@ Perfectly balanced, 0 nulls — classification is working correctly.
 
 ## What's Unblocked Now
 
-Per `docs/prp/00_EXECUTION-PLAN.md`, PRP-01 ✅ unblocks:
+PRP-01 ✅ + PRP-02 ✅ unblock:
 
-### Wave 2 (can start immediately)
-- **PRP-02** — Home/Away Split Utility (`backend/utils/homeAwaySplit.js`)
-  - Pure utility, no network calls
-  - Reads `is_home` from normalized stat rows (now populated)
-  - Est. ~20 min
+### Wave 3 — PRP-06 (Confidence Engine) now unblocked by 01+02, still waiting on PRP-03 + PRP-04
+- **PRP-06** becomes fully unblocked once PRP-03 and PRP-04 are done
 
-### Still in Wave 1 (can run in parallel with PRP-02)
+### Still in Wave 1 / independent (run in parallel)
 - **PRP-03** — Next Game Detection (no dependencies)
 - **PRP-04** — Odds API Service (no dependencies)
+
+---
+
+## Completed: PRP-02 — Home/Away Split Utility
+
+### What was done
+- Added `homeAwaySplit(stats, statKey)` export to `backend/utils/analytics.js`
+- Extended `backend/tests/espn-home-away.test.js` with 7 new unit tests (describe block)
+- Total test count: 10/10 pass (3 from PRP-01 + 7 from PRP-02)
+
+### Implementation
+```js
+export function homeAwaySplit(stats, statKey = 'pts') {
+  const homeGames = stats.filter((s) => s.is_home === true);
+  const awayGames = stats.filter((s) => s.is_home === false);
+  const avg = (games) => {
+    if (!games.length) return null;
+    const total = games.reduce((acc, s) => acc + num(s[statKey] ?? 0), 0);
+    return +(total / games.length).toFixed(1);
+  };
+  return { home_avg: avg(homeGames), away_avg: avg(awayGames),
+           home_games: homeGames.length, away_games: awayGames.length };
+}
+```
+
+### Key behaviors confirmed
+- `is_home: null` rows excluded from both buckets (strict `=== true` / `=== false` filter)
+- Empty bucket → `avg: null`, `count: 0` (never throws)
+- Works for any stat key (`pts`, `reb`, `ast`, etc.)
+
+### Files changed
+| File | Change |
+|------|--------|
+| `backend/utils/analytics.js` | Additive — `homeAwaySplit()` export at bottom |
+| `backend/tests/espn-home-away.test.js` | Additive — 7-test `describe('homeAwaySplit')` block + updated import |
 
 ---
 
@@ -115,10 +147,14 @@ For each PRP, follow the TDD cycle exactly as written in the PRP file:
 4. Commit: `git add <files> && git commit -m "feat: PRP-XX — ..."`
 5. Push: `git push`
 
-**Command to give Claude for next PRP:**
+**Next PRPs (both independent — can run in parallel):**
 ```
-Execute PRP-02: read docs/prp/02_PRP_HOME-AWAY-SPLIT-UTILITY.md fully,
-follow the TDD cycle exactly (write test first, verify RED,
-implement, verify GREEN, refactor), then confirm all
-acceptance criteria are met. Check PROGRESS.md for context on PRP-01.
+Execute PRP-03: read docs/prp/03_PRP_NEXT-GAME-DETECTION.md fully,
+follow the TDD cycle (write test first → RED → implement → GREEN),
+confirm all acceptance criteria. Check PROGRESS.md for context.
+```
+```
+Execute PRP-04: read docs/prp/04_PRP_ODDS-API-SERVICE.md fully,
+follow the TDD cycle (write test first → RED → implement → GREEN),
+confirm all acceptance criteria. Check PROGRESS.md for context.
 ```
