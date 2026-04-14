@@ -1,7 +1,7 @@
 # PRP Execution Progress
 
 **Branch:** `feature/player-prop-analytics`  
-**Last updated:** 2026-04-14 (PRP-03 done, PRP-04 done, PRP-05 done, PRP-06 done, PRP-08 done)  
+**Last updated:** 2026-04-14 (PRP-01 through PRP-08 done — 37/37 tests pass)  
 **Executed by:** Claude Sonnet 4.6
 
 ---
@@ -16,7 +16,7 @@
 | PRP-04 | Odds API Service | ✅ DONE | 4/4 pass |
 | PRP-05 | NBA Stats Matchup Service | ✅ DONE | 4/4 pass |
 | PRP-06 | Confidence Engine | ✅ DONE | 9/9 pass |
-| PRP-07 | Props API Endpoint | ⏳ READY | — |
+| PRP-07 | Props API Endpoint | ✅ DONE | 4/4 pass |
 | PRP-08 | Matchup API Endpoint | ✅ DONE | 3/3 pass |
 | PRP-09 | Frontend API Client | ⏳ READY | — |
 | PRP-10 | ConfidenceMeter Component | 🔒 blocked by PRP-09 | — |
@@ -300,10 +300,46 @@ Real possession data (PRP-05 / `getMatchup()`) is required for a meaningful matc
 
 ## What's Unblocked Now
 
-PRP-01 ✅ + PRP-02 ✅ + PRP-03 ✅ + PRP-04 ✅ + PRP-05 ✅ + PRP-06 ✅ + PRP-08 ✅ unblock:
+PRP-01 ✅ through PRP-08 ✅ all done. Unblocks:
 
 - **PRP-09** (Frontend API Client) — fully unblocked (was waiting on PRP-07 + PRP-08)
 - **PRP-14** (Backtest Framework) — fully unblocked (was waiting on PRP-06)
+- PRP-09 unblocks PRP-10, PRP-10 + PRP-09 unblock PRP-11, PRP-11 unblocks PRP-12 + PRP-13
+
+---
+
+## Completed: PRP-07 — Props API Endpoint
+
+### What was done
+- Added `GET /api/player/:id/props` route to `backend/routes/players.js`
+- Added imports: `computeConfidence`, `getPlayerProps`, `getNextGame`, `homeAwaySplit`
+- Created `backend/tests/props-endpoint.test.js` (4 integration tests, all pass)
+- Total test count after PRP-07: 37/37 pass (shared run with PRP-08)
+
+### Implementation
+```js
+router.get('/player/:id/props', async (req, res, next) => {
+  // Loads player + stats, fetches odds + next game in parallel
+  // Computes home/away splits and hit rates (last 15 games) per stat
+  // Calls computeConfidence() for pts and reb with matchupRow: null
+  // Cache TTL: 1800s (tied to odds cache)
+});
+```
+
+### Response shape
+`{ player, next_game, props: { points: { ...odds, season_avg, home_avg, away_avg, home_games, away_games, hit_rate_over, hit_rate_sample, confidence }, rebounds: { same } } }`
+
+### Key design decisions
+- `matchupRow: null` for both confidence calls — defender unknown at this endpoint; Factor 4 falls back to neutral 50
+- `hit_rate_over` = `Math.round(hits / sample.length * 100)` — integer 0–100, not float
+- `next_game` propagates as `null` during offseason; never throws
+- `ptsLine` / `rebLine` may be `null` when `odds_available: false` → `hit_rate_over: null` gracefully
+
+### Files changed
+| File | Change |
+|------|--------|
+| `backend/routes/players.js` | Added imports + `GET /player/:id/props` route |
+| `backend/tests/props-endpoint.test.js` | NEW — 4 integration tests |
 
 ---
 
