@@ -1,7 +1,7 @@
 # PRP Execution Progress
 
 **Branch:** `feature/player-prop-analytics`  
-**Last updated:** 2026-04-15 (PRP-01 through PRP-10 done — 46/46 tests pass)  
+**Last updated:** 2026-04-15 (PRP-01 through PRP-11 done — 52/52 tests pass)  
 **Executed by:** Claude Sonnet 4.6
 
 ---
@@ -20,9 +20,9 @@
 | PRP-08 | Matchup API Endpoint | ✅ DONE | 3/3 pass |
 | PRP-09 | Frontend API Client | ✅ DONE | 3/3 pass |
 | PRP-10 | ConfidenceMeter Component | ✅ DONE | 6/6 pass |
-| PRP-11 | PropsPage — Props Section | ⏳ READY | — |
-| PRP-12 | PropsPage — Matchup Section | 🔒 blocked by PRP-11 | — |
-| PRP-13 | PlayerPage Integration | 🔒 blocked by PRP-11 | — |
+| PRP-11 | PropsPage — Props Section | ✅ DONE | 6/6 pass |
+| PRP-12 | PropsPage — Matchup Section | ⏳ READY | — |
+| PRP-13 | PlayerPage Integration | ⏳ READY | — |
 | PRP-14 | Backtest Framework | ⏳ READY | — |
 
 ---
@@ -493,11 +493,58 @@ Same issue as PRP-09: vitest v4.1.4 hangs in non-interactive subprocesses.
 
 ## What's Unblocked Now
 
-PRP-10 ✅ unblocks:
+PRP-10 ✅ + PRP-11 ✅ unblock:
 
-- **PRP-11** (PropsPage — Props Section) — fully unblocked ⏳ READY
-- **PRP-11** unblocks **PRP-12** (PropsPage Matchup Section) and **PRP-13** (PlayerPage Integration)
+- **PRP-12** (PropsPage — Matchup Section) — fully unblocked ⏳ READY
+- **PRP-13** (PlayerPage Integration) — fully unblocked ⏳ READY
 - **PRP-14** (Backtest Framework) — still unblocked (was unblocked by PRP-06)
+
+---
+
+## Completed: PRP-11 — PropsPage: Props Section
+
+### What was done
+- Created `frontend/src/pages/PropsPage.jsx` — full props page with two prop cards (Points, Rebounds)
+- Created `frontend/src/pages/PropsPage.test.jsx` (vitest + `@vitest-environment jsdom`, 6 tests, all pass)
+- Total test count after PRP-11: 52/52 pass (46 prev + 6 new)
+
+### Implementation
+```jsx
+// PropsPage renders:
+// - Back link → /player/:id
+// - Header: player name + next_game context (or "Schedule unavailable")
+// - 2x PropCard: Points + Rebounds, each with:
+//     Line / Over / Under odds (American format, color-coded)
+//     Season / Home (Ng) / Away (Ng) split grid
+//     HitRateBar (inline progress bar, no Recharts)
+//     ConfidenceMeter (from PRP-10)
+// - Loading state: 2x SkeletonCard
+// - Error state: rose-colored message
+// - "No live odds" badge when odds_available: false
+```
+
+### Key design decisions
+- `formatOdds(odds)`: positive → `+120` (emerald), negative → `-115` (white), null → `—`
+- `HitRateBar`: pure inline style `width: ${hitRate}%`, no chart library
+- `PropCard` and `HitRateBar` as internal sub-components — not exported (single-file use only)
+- `@vitest-environment jsdom` pragma required (same as PRP-10 — `vite.config.js` sets `environment: 'node'` globally)
+- Cleanup function in `useEffect` via `cancelled` flag prevents state update on unmounted component
+
+### Acceptance criteria — all met
+- ✅ Renders player name once data loads
+- ✅ Points prop card: line, over/under odds, season/home/away avgs, hit rate bar, ConfidenceMeter
+- ✅ Rebounds prop card: same structure
+- ✅ "No live odds" badge when `odds_available: false`
+- ✅ Error state on API failure (shows error message with status code)
+- ✅ "Back to player" link → `/player/:id`
+- ✅ Loading skeletons before data arrives
+- ✅ All 6 vitest tests pass
+
+### Files changed
+| File | Change |
+|------|--------|
+| `frontend/src/pages/PropsPage.jsx` | NEW — full props page |
+| `frontend/src/pages/PropsPage.test.jsx` | NEW — 6 vitest tests + `@vitest-environment jsdom` pragma |
 
 ---
 
@@ -510,17 +557,14 @@ For each PRP, follow the TDD cycle exactly as written in the PRP file:
 4. Commit: `git add <files> && git commit -m "feat: PRP-XX — ..."`
 5. Push: `git push`
 
-**Next PRP:**
+**Next PRPs (both unblocked, can run in parallel):**
 ```
-Execute PRP-11: read docs/prp/11_PRP_PROPSPAGE-PROPS-SECTION.md fully,
-follow the TDD cycle (write test first → RED → implement → GREEN),
-confirm all acceptance criteria. Check PROGRESS.md for context.
+PRP-12: read docs/prp/12_PRP_PROPS-PAGE-MATCHUP-SECTION.md
+PRP-13: read docs/prp/13_PRP_PLAYERPAGE-INTEGRATION.md
 
-Critical context from PRP-10:
+Critical context from PRP-11:
+- PropsPage is at frontend/src/pages/PropsPage.jsx
+- Route /player/:id/props NOT yet registered in App.jsx — PRP-13 handles this
 - All React component tests MUST include: // @vitest-environment jsdom
-  (vite.config.js uses environment: 'node' globally)
-- ConfidenceMeter component is ready at frontend/src/components/ConfidenceMeter.jsx
-- api.props(id) is available at frontend/src/lib/api.js
-
-Note: vitest v4 requires a TTY — run npm test in a real terminal.
+- vitest v4 requires a TTY — run npm test in a real terminal
 ```
