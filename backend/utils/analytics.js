@@ -108,6 +108,26 @@ function sigmoid(x) {
   return 1 / (1 + Math.exp(-x));
 }
 
+// Returns home/away averages and game counts for a single stat key.
+// Rows with is_home: null are excluded from both buckets.
+export function homeAwaySplit(stats, statKey = 'pts') {
+  const homeGames = stats.filter((s) => s.is_home === true);
+  const awayGames = stats.filter((s) => s.is_home === false);
+
+  const avg = (games) => {
+    if (!games.length) return null;
+    const total = games.reduce((acc, s) => acc + num(s[statKey] ?? 0), 0);
+    return +(total / games.length).toFixed(1);
+  };
+
+  return {
+    home_avg:   avg(homeGames),
+    away_avg:   avg(awayGames),
+    home_games: homeGames.length,
+    away_games: awayGames.length,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Matchup & archetype logic
 // ---------------------------------------------------------------------------

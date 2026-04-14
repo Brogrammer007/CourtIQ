@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeStat } from '../utils/analytics.js';
+import { normalizeStat, homeAwaySplit } from '../utils/analytics.js';
 
 describe('normalizeStat — is_home field', () => {
   it('passes is_home: true through when row has is_home: true', () => {
@@ -31,5 +31,62 @@ describe('normalizeStat — is_home field', () => {
     };
     const result = normalizeStat(row, null);
     assert.equal(result.is_home, null);
+  });
+});
+
+describe('homeAwaySplit', () => {
+  const stats = [
+    { is_home: true,  pts: 30, reb: 14 },
+    { is_home: true,  pts: 26, reb: 12 },
+    { is_home: false, pts: 24, reb: 10 },
+    { is_home: false, pts: 28, reb: 13 },
+    { is_home: null,  pts: 20, reb: 8  },
+  ];
+
+  it('calculates correct home average for pts', () => {
+    const split = homeAwaySplit(stats, 'pts');
+    assert.equal(split.home_avg, 28.0);
+  });
+
+  it('calculates correct away average for pts', () => {
+    const split = homeAwaySplit(stats, 'pts');
+    assert.equal(split.away_avg, 26.0);
+  });
+
+  it('counts home and away games correctly', () => {
+    const split = homeAwaySplit(stats, 'pts');
+    assert.equal(split.home_games, 2);
+    assert.equal(split.away_games, 2);
+  });
+
+  it('excludes null is_home rows from both buckets', () => {
+    const split = homeAwaySplit(stats, 'pts');
+    // 5 rows total, 1 null — only 4 should count
+    assert.equal(split.home_games + split.away_games, 4);
+  });
+
+  it('works for reb stat key', () => {
+    const split = homeAwaySplit(stats, 'reb');
+    assert.equal(split.home_avg, 13.0);
+    assert.equal(split.away_avg, 11.5);
+  });
+
+  it('returns null avg and 0 count when bucket is empty', () => {
+    const homeOnly = [
+      { is_home: true, pts: 25, reb: 10 },
+      { is_home: true, pts: 27, reb: 12 },
+    ];
+    const split = homeAwaySplit(homeOnly, 'pts');
+    assert.equal(split.away_avg, null);
+    assert.equal(split.away_games, 0);
+  });
+
+  it('returns nulls for both when all rows have is_home: null', () => {
+    const noContext = [
+      { is_home: null, pts: 25, reb: 10 },
+    ];
+    const split = homeAwaySplit(noContext, 'pts');
+    assert.equal(split.home_avg, null);
+    assert.equal(split.away_avg, null);
   });
 });
