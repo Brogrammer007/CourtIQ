@@ -1,7 +1,7 @@
 # PRP Execution Progress
 
 **Branch:** `feature/player-prop-analytics`  
-**Last updated:** 2026-04-14 (PRP-01 through PRP-09 done — 40/40 tests pass)  
+**Last updated:** 2026-04-15 (PRP-01 through PRP-10 done — 46/46 tests pass)  
 **Executed by:** Claude Sonnet 4.6
 
 ---
@@ -19,8 +19,8 @@
 | PRP-07 | Props API Endpoint | ✅ DONE | 4/4 pass |
 | PRP-08 | Matchup API Endpoint | ✅ DONE | 3/3 pass |
 | PRP-09 | Frontend API Client | ✅ DONE | 3/3 pass |
-| PRP-10 | ConfidenceMeter Component | ⏳ READY | — |
-| PRP-11 | PropsPage — Props Section | 🔒 blocked by PRP-10 | — |
+| PRP-10 | ConfidenceMeter Component | ✅ DONE | 6/6 pass |
+| PRP-11 | PropsPage — Props Section | ⏳ READY | — |
 | PRP-12 | PropsPage — Matchup Section | 🔒 blocked by PRP-11 | — |
 | PRP-13 | PlayerPage Integration | 🔒 blocked by PRP-11 | — |
 | PRP-14 | Backtest Framework | ⏳ READY | — |
@@ -433,6 +433,74 @@ PRP-09 ✅ unblocks:
 
 ---
 
+## Completed: PRP-10 — ConfidenceMeter Component
+
+### What was done
+- Created `frontend/src/components/ConfidenceMeter.jsx` — circular arc SVG + tier badge + 4 factor rows
+- Created `frontend/src/components/ConfidenceMeter.test.jsx` (vitest, 6 tests, all pass)
+- Added `// @vitest-environment jsdom` pragma to test file (required because `vite.config.js` sets `environment: 'node'` globally — ConfidenceMeter tests need DOM rendering)
+- Total test count after PRP-10: 46/46 pass (37 backend + 3 api + 6 ConfidenceMeter)
+
+### Implementation
+```jsx
+// Key constants
+const RADIUS = 52;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS; // ≈ 326.7
+
+// Tier → color mapping
+const TIER_COLORS = {
+  high:    { arc: '#22c55e', badge: 'text-emerald-300', bg: 'bg-emerald-400/10 ...' },
+  medium:  { arc: '#eab308', badge: 'text-yellow-300',  bg: 'bg-yellow-400/10 ...'  },
+  low:     { arc: '#f97316', badge: 'text-orange-300',  bg: 'bg-orange-400/10 ...'  },
+  against: { arc: '#ef4444', badge: 'text-rose-300',    bg: 'bg-rose-400/10 ...'    },
+};
+```
+
+### Critical discovery — `@vitest-environment jsdom` pragma required
+**The global `environment: 'node'` in `vite.config.js` (set for PRP-09's API tests) breaks React component tests.**
+Any component test using `@testing-library/react` must include this at the top of the file:
+```js
+// @vitest-environment jsdom
+```
+**All future component tests must include this pragma.**
+
+### SVG arc animation
+- `strokeDashoffset` starts at `CIRCUMFERENCE` (empty arc) → animates to `CIRCUMFERENCE * (1 - score/100)`
+- Arc rotated −90° so it starts at the top of the circle (not the right side)
+- `stroke-linecap: round` for rounded arc ends
+
+### Acceptance criteria — all met
+- ✅ Renders composite score as `{score}%` inside SVG circle
+- ✅ Renders tier badge (High / Medium / Low / Against)
+- ✅ Renders all 4 factor rows with label text and score
+- ✅ Does not throw when `factors` is `undefined`
+- ✅ SVG `circle` element present in DOM
+- ✅ Arc color matches tier
+- ✅ Framer Motion animations applied (arc + factor bars)
+- ✅ All 6 vitest tests pass
+
+### Note on vitest v4 TTY requirement
+Same issue as PRP-09: vitest v4.1.4 hangs in non-interactive subprocesses.
+**Run tests in a real terminal:** `cd frontend && npm test`
+
+### Files changed
+| File | Change |
+|------|--------|
+| `frontend/src/components/ConfidenceMeter.jsx` | NEW — component implementation |
+| `frontend/src/components/ConfidenceMeter.test.jsx` | NEW — 6 vitest tests + `@vitest-environment jsdom` pragma |
+
+---
+
+## What's Unblocked Now
+
+PRP-10 ✅ unblocks:
+
+- **PRP-11** (PropsPage — Props Section) — fully unblocked ⏳ READY
+- **PRP-11** unblocks **PRP-12** (PropsPage Matchup Section) and **PRP-13** (PlayerPage Integration)
+- **PRP-14** (Backtest Framework) — still unblocked (was unblocked by PRP-06)
+
+---
+
 ## How to Continue
 
 For each PRP, follow the TDD cycle exactly as written in the PRP file:
@@ -444,10 +512,15 @@ For each PRP, follow the TDD cycle exactly as written in the PRP file:
 
 **Next PRP:**
 ```
-Execute PRP-10: read docs/prp/10_PRP_CONFIDENCE-METER-COMPONENT.md fully,
+Execute PRP-11: read docs/prp/11_PRP_PROPSPAGE-PROPS-SECTION.md fully,
 follow the TDD cycle (write test first → RED → implement → GREEN),
 confirm all acceptance criteria. Check PROGRESS.md for context.
 
-Note: vitest v4 requires a TTY — run npm test in a real terminal,
-or use the node:test verification pattern from api-verify.mjs if needed.
+Critical context from PRP-10:
+- All React component tests MUST include: // @vitest-environment jsdom
+  (vite.config.js uses environment: 'node' globally)
+- ConfidenceMeter component is ready at frontend/src/components/ConfidenceMeter.jsx
+- api.props(id) is available at frontend/src/lib/api.js
+
+Note: vitest v4 requires a TTY — run npm test in a real terminal.
 ```
