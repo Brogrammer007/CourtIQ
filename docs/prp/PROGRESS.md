@@ -1,7 +1,7 @@
 # PRP Execution Progress
 
 **Branch:** `feature/player-prop-analytics`  
-**Last updated:** 2026-04-14 (PRP-03 done, PRP-04 done, PRP-05 done, PRP-06 done)  
+**Last updated:** 2026-04-14 (PRP-03 done, PRP-04 done, PRP-05 done, PRP-06 done, PRP-08 done)  
 **Executed by:** Claude Sonnet 4.6
 
 ---
@@ -17,8 +17,8 @@
 | PRP-05 | NBA Stats Matchup Service | ✅ DONE | 4/4 pass |
 | PRP-06 | Confidence Engine | ✅ DONE | 9/9 pass |
 | PRP-07 | Props API Endpoint | ⏳ READY | — |
-| PRP-08 | Matchup API Endpoint | ⏳ READY | — |
-| PRP-09 | Frontend API Client | 🔒 blocked by PRP-07, PRP-08 | — |
+| PRP-08 | Matchup API Endpoint | ✅ DONE | 3/3 pass |
+| PRP-09 | Frontend API Client | ⏳ READY | — |
 | PRP-10 | ConfidenceMeter Component | 🔒 blocked by PRP-09 | — |
 | PRP-11 | PropsPage — Props Section | 🔒 blocked by PRP-09, PRP-10 | — |
 | PRP-12 | PropsPage — Matchup Section | 🔒 blocked by PRP-11 | — |
@@ -300,12 +300,47 @@ Real possession data (PRP-05 / `getMatchup()`) is required for a meaningful matc
 
 ## What's Unblocked Now
 
-PRP-01 ✅ + PRP-02 ✅ + PRP-03 ✅ + PRP-04 ✅ + PRP-05 ✅ + PRP-06 ✅ unblock:
+PRP-01 ✅ + PRP-02 ✅ + PRP-03 ✅ + PRP-04 ✅ + PRP-05 ✅ + PRP-06 ✅ + PRP-08 ✅ unblock:
 
-- **PRP-07** (Props API Endpoint) — fully unblocked (was waiting on PRP-04 + PRP-06)
-- **PRP-08** (Matchup API Endpoint) — fully unblocked (was waiting on PRP-05)
+- **PRP-09** (Frontend API Client) — fully unblocked (was waiting on PRP-07 + PRP-08)
 - **PRP-14** (Backtest Framework) — fully unblocked (was waiting on PRP-06)
-- PRP-07 and PRP-08 can run in parallel (independent of each other)
+
+---
+
+## Completed: PRP-08 — Matchup API Endpoint
+
+### What was done
+- Added `import { getMatchup } from '../services/nbaStats.js'` to `backend/routes/players.js`
+- Added `GET /api/player/:id/matchup/:defenderId` route to `backend/routes/players.js`
+- Created `backend/tests/matchup-endpoint.test.js` (3 integration tests, all pass)
+- Total test count after PRP-08: 37/37 pass
+
+### Implementation
+```js
+router.get('/player/:id/matchup/:defenderId', async (req, res, next) => {
+  // Resolves both ESPN players in parallel via getPlayer()
+  // Calls getMatchup(offPlayer, defPlayer) from nbaStats.js
+  // Returns: offender, defender, matchup_data, vs_season_avg, verdict
+  // Cache TTL: 86400s (24h)
+});
+```
+
+### Verdict logic
+- `fg_pct_allowed` vs league avg (0.470): diff ≤ −5 → Tough, diff ≥ +5 → Favorable, else Neutral
+- Tones: `'down'` / `'up'` / `'flat'`
+
+### Error handling
+| Condition | Status |
+|-----------|--------|
+| Defender ESPN ID unknown | 404 `"Defender not found."` |
+| No shared matchup rows | 404 `"No matchup data found..."` |
+| `MATCHUP_UNAVAILABLE` thrown | 503 `"Matchup data temporarily unavailable."` |
+
+### Files changed
+| File | Change |
+|------|--------|
+| `backend/routes/players.js` | Added `getMatchup` import + new route |
+| `backend/tests/matchup-endpoint.test.js` | NEW — 3 integration tests |
 
 ---
 
@@ -318,14 +353,9 @@ For each PRP, follow the TDD cycle exactly as written in the PRP file:
 4. Commit: `git add <files> && git commit -m "feat: PRP-XX — ..."`
 5. Push: `git push`
 
-**Next PRPs (PRP-07 and PRP-08 are independent — can run in parallel):**
+**Next PRP:**
 ```
-Execute PRP-07: read docs/prp/07_PRP_PROPS-API-ENDPOINT.md fully,
-follow the TDD cycle (write test first → RED → implement → GREEN),
-confirm all acceptance criteria. Check PROGRESS.md for context.
-```
-```
-Execute PRP-08: read docs/prp/08_PRP_MATCHUP-API-ENDPOINT.md fully,
+Execute PRP-09: read docs/prp/09_PRP_FRONTEND-API-CLIENT.md fully,
 follow the TDD cycle (write test first → RED → implement → GREEN),
 confirm all acceptance criteria. Check PROGRESS.md for context.
 ```
