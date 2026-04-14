@@ -1,7 +1,7 @@
 # PRP Execution Progress
 
 **Branch:** `feature/player-prop-analytics`  
-**Last updated:** 2026-04-14 (PRP-03 done)  
+**Last updated:** 2026-04-14 (PRP-03 done, PRP-04 done)  
 **Executed by:** Claude Sonnet 4.6
 
 ---
@@ -13,9 +13,9 @@
 | PRP-01 | ESPN Home/Away Extension | ✅ DONE | 3/3 pass |
 | PRP-02 | Home/Away Split Utility | ✅ DONE | 10/10 pass |
 | PRP-03 | Next Game Detection | ✅ DONE | 3/3 pass |
-| PRP-04 | Odds API Service | ⏳ READY | — |
-| PRP-05 | NBA Stats Matchup Service | 🔒 blocked by PRP-04 | — |
-| PRP-06 | Confidence Engine | 🔒 blocked by PRP-04 | — |
+| PRP-04 | Odds API Service | ✅ DONE | 4/4 pass |
+| PRP-05 | NBA Stats Matchup Service | ⏳ READY | — |
+| PRP-06 | Confidence Engine | ⏳ READY | — |
 | PRP-07 | Props API Endpoint | 🔒 blocked by PRP-04, PRP-06 | — |
 | PRP-08 | Matchup API Endpoint | 🔒 blocked by PRP-05 | — |
 | PRP-09 | Frontend API Client | 🔒 blocked by PRP-07, PRP-08 | — |
@@ -172,11 +172,57 @@ export async function getNextGame(teamId) {
 
 PRP-01 ✅ + PRP-02 ✅ + PRP-03 ✅ unblock:
 
-- **PRP-06** (Confidence Engine) — still waiting on PRP-04 (Odds API Service)
-- **PRP-07** (Props API Endpoint) — still waiting on PRP-04 + PRP-06
+- **PRP-05** (NBA Stats Matchup Service) — unblocked by PRP-04 ✅
+- **PRP-06** (Confidence Engine) — unblocked by PRP-01 ✅ + PRP-02 ✅ + PRP-03 ✅ + PRP-04 ✅
+- **PRP-07** (Props API Endpoint) — still waiting on PRP-06
+- **PRP-08** (Matchup API Endpoint) — still waiting on PRP-05
 
-### Still independent (no dependencies)
-- **PRP-04** — Odds API Service — run next
+---
+
+## Completed: PRP-04 — Odds API Service
+
+### What was done
+- Created `backend/services/odds.js` with `getPlayerProps(playerName)` and exported `normName(s)` utility
+- Created `backend/tests/odds-service.test.js` (4 unit tests, all pass)
+- Total test count after PRP-04: 17/17 pass
+
+### Implementation
+```js
+export function normName(s) {
+  return (s || '').normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .replace(/\s*\b(jr|sr|ii|iii|iv)\b\.?\s*/gi, ' ')
+    .toLowerCase().trim().replace(/\s+/g, ' ');
+}
+
+export async function getPlayerProps(playerName) {
+  // Returns { points: { line, over_odds, under_odds, odds_available }, rebounds: {...} }
+  // Fetches from The Odds API (v4), stops on first event with player match
+  // Returns odds_available: false (no throw) when: no API key, network error, player not found
+}
+```
+
+### Key behaviors confirmed
+- Diacritic normalization: `"Nikola Jokić"` matches `"Nikola Jokic"` in feed
+- Zero HTTP calls when `ODDS_API_KEY` not set
+- Graceful degradation on network errors
+- Early exit after first player match (API cost optimization)
+- `normName` exported so PRP-05 can reuse without duplication
+
+### Files changed
+| File | Change |
+|------|--------|
+| `backend/services/odds.js` | NEW — `normName()` + `getPlayerProps()` |
+| `backend/tests/odds-service.test.js` | NEW — 4 unit tests |
+
+---
+
+## What's Unblocked Now
+
+PRP-01 ✅ + PRP-02 ✅ + PRP-03 ✅ + PRP-04 ✅ unblock:
+
+- **PRP-05** (NBA Stats Matchup Service) — ready to run
+- **PRP-06** (Confidence Engine) — ready to run
+- Both can run in parallel (independent of each other)
 
 ---
 
@@ -189,9 +235,14 @@ For each PRP, follow the TDD cycle exactly as written in the PRP file:
 4. Commit: `git add <files> && git commit -m "feat: PRP-XX — ..."`
 5. Push: `git push`
 
-**Next PRP (independent, no dependencies):**
+**Next PRPs (both independent — can run in parallel):**
 ```
-Execute PRP-04: read docs/prp/04_PRP_ODDS-API-SERVICE.md fully,
+Execute PRP-05: read docs/prp/05_PRP_NBA-STATS-MATCHUP-SERVICE.md fully,
+follow the TDD cycle (write test first → RED → implement → GREEN),
+confirm all acceptance criteria. Check PROGRESS.md for context.
+```
+```
+Execute PRP-06: read docs/prp/06_PRP_CONFIDENCE-ENGINE.md fully,
 follow the TDD cycle (write test first → RED → implement → GREEN),
 confirm all acceptance criteria. Check PROGRESS.md for context.
 ```
