@@ -101,6 +101,9 @@ export async function espnFindByName(firstName, lastName) {
   return all.find((p) => normName(p.first_name) === f && normName(p.last_name) === l) ?? null;
 }
 
+const SCHEDULE_URL = (teamId) =>
+  `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/${teamId}/schedule`;
+
 // --- Real per-game stats (gamelog) -----------------------------------------
 // ESPN labels: MIN, FG, FG%, 3PT, 3P%, FT, FT%, REB, AST, BLK, STL, PF, TO, PTS
 const GAMELOG_URL = (id) =>
@@ -152,4 +155,42 @@ export async function espnGetPlayerStats(id) {
   rows.sort((a, b) => (b.game_date || '').localeCompare(a.game_date || ''));
   const cutoff = '2024-01-01';
   return rows.filter((r) => (r.game_date || '') >= cutoff);
+}
+
+// Returns the next unplayed game for a given ESPN team ID.
+// Returns { opponent_id, opponent_name, is_home, date } or null.
+export async function getNextGame(teamId) {
+  let res;
+  try {
+    res = await fetch(SCHEDULE_URL(teamId));
+  } catch {
+    return null;
+  }
+  if (!res.ok) return null;
+
+  const j = await res.json();
+  const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
+  const events = j.events || [];
+
+  for (const event of events) {
+    const dateStr = event.date ? event.date.slice(0, 10) : null;
+    if (!dateStr || dateStr < today) continue;
+
+    const competitions = event.competitions || [];
+    for (const comp of competitions) {
+      const competitors = comp.competitors || [];
+      const us   = competitors.find((c) => String(c.team?.id) === String(teamId));
+      const them = competitors.find((c) => String(c.team?.id) !== String(teamId));
+      if (!us || !them) continue;
+
+      return {
+        opponent_id:   Number(them.team.id),
+        opponent_name: them.team.displayName || them.team.name || '',
+        is_home:       us.homeAway?.trim() === 'home',
+        date:          dateStr,
+      };
+    }
+  }
+
+  return null;
 }
