@@ -126,10 +126,16 @@ export async function espnGetPlayerStats(id) {
         // Skip DNPs (MIN 0 and PTS 0 with no attempts)
         if (num(s[0]) === 0 && num(s[13]) === 0) continue;
         const oppId = meta.opponent?.id ? Number(meta.opponent.id) : null;
+        const isHome = meta.atVs === 'vs' ? true
+                     : meta.atVs === '@' ? false
+                     : meta.team?.id != null
+                       ? String(meta.team.id) === String(meta.homeTeamId)
+                       : null;
         rows.push({
           event_id: e.eventId,
           game_date: meta.gameDate ? meta.gameDate.slice(0, 10) : null,
           opponent_id: oppId,
+          is_home: isHome,
           min: String(s[0] ?? ''),
           pts: num(s[13]),
           reb: num(s[7]),

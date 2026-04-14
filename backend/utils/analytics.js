@@ -21,6 +21,7 @@ export function normalizeStat(row, ownTeamId) {
     event_id: row.event_id ?? null,
     date: row.game?.date || row.game_date || null,
     opponent_id,
+    is_home: row.is_home ?? null,
     pts: num(row.pts),
     reb: num(row.reb),
     ast: num(row.ast),
