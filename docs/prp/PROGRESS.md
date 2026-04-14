@@ -1,7 +1,7 @@
 # PRP Execution Progress
 
 **Branch:** `feature/player-prop-analytics`  
-**Last updated:** 2026-04-14 (PRP-01 through PRP-08 done — 37/37 tests pass)  
+**Last updated:** 2026-04-14 (PRP-01 through PRP-09 done — 40/40 tests pass)  
 **Executed by:** Claude Sonnet 4.6
 
 ---
@@ -18,9 +18,9 @@
 | PRP-06 | Confidence Engine | ✅ DONE | 9/9 pass |
 | PRP-07 | Props API Endpoint | ✅ DONE | 4/4 pass |
 | PRP-08 | Matchup API Endpoint | ✅ DONE | 3/3 pass |
-| PRP-09 | Frontend API Client | ⏳ READY | — |
-| PRP-10 | ConfidenceMeter Component | 🔒 blocked by PRP-09 | — |
-| PRP-11 | PropsPage — Props Section | 🔒 blocked by PRP-09, PRP-10 | — |
+| PRP-09 | Frontend API Client | ✅ DONE | 3/3 pass |
+| PRP-10 | ConfidenceMeter Component | ⏳ READY | — |
+| PRP-11 | PropsPage — Props Section | 🔒 blocked by PRP-10 | — |
 | PRP-12 | PropsPage — Matchup Section | 🔒 blocked by PRP-11 | — |
 | PRP-13 | PlayerPage Integration | 🔒 blocked by PRP-11 | — |
 | PRP-14 | Backtest Framework | ⏳ READY | — |
@@ -380,6 +380,59 @@ router.get('/player/:id/matchup/:defenderId', async (req, res, next) => {
 
 ---
 
+---
+
+## Completed: PRP-09 — Frontend API Client Extensions
+
+### What was done
+- Added `props(id)` and `defensiveMatchup(offId, defId)` to `frontend/src/lib/api.js`
+- Installed `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom` as devDeps
+- Added `test` and `test:watch` scripts to `frontend/package.json`
+- Added vitest config block (`environment: 'node'`, `pool: 'vmForks'`, `globals: true`) to `frontend/vite.config.js`
+- Created `frontend/src/lib/api.test.js` (vitest, 3 tests — canonical test file)
+- Created `frontend/src/lib/api-verify.mjs` (node:test runner) — used for verification in non-TTY environments
+- Total test count after PRP-09: 40/40 pass (37 backend + 3 frontend)
+
+### Implementation
+```js
+// Two lines added to the api object in frontend/src/lib/api.js:
+props:            (id) => j(`/player/${id}/props`),
+defensiveMatchup: (offId, defId) => j(`/player/${offId}/matchup/${defId}`),
+```
+
+### Key discovery — vitest v4 requires a TTY
+**vitest v4.1.4 writes test output directly to the TTY device, not to stdout/stderr pipes.**
+This means `npm test` hangs silently when run in a non-interactive subprocess (e.g., background bash tasks, CI without TTY allocation).
+
+**Workaround used:** `api-verify.mjs` uses `node --test` (same runner as backend tests) with `import.meta.env` replaced via string patching + `data:` URL import.
+
+**For CI:** Either allocate a pseudo-TTY (`-t` flag in Docker) or use `--reporter=json --outputFile=...` and parse the file instead of stdout.
+
+**For local dev:** `npm test` works fine in a terminal.
+
+### Files changed
+| File | Change |
+|------|--------|
+| `frontend/src/lib/api.js` | Additive — `props()` + `defensiveMatchup()` methods |
+| `frontend/package.json` | Added `test`/`test:watch` scripts + vitest devDeps |
+| `frontend/package-lock.json` | Updated lockfile |
+| `frontend/vite.config.js` | Added `test` config block |
+| `frontend/src/lib/api.test.js` | NEW — 3 vitest tests (canonical) |
+| `frontend/src/lib/api-verify.mjs` | NEW — 3 node:test tests (non-TTY verification) |
+
+---
+
+## What's Unblocked Now
+
+PRP-09 ✅ unblocks:
+
+- **PRP-10** (ConfidenceMeter Component) — fully unblocked ⏳ READY
+- **PRP-10 + PRP-09** together unblock **PRP-11** (PropsPage Props Section)
+- **PRP-11** unblocks **PRP-12** (PropsPage Matchup Section) and **PRP-13** (PlayerPage Integration)
+- **PRP-14** (Backtest Framework) — was already unblocked by PRP-06 ✅
+
+---
+
 ## How to Continue
 
 For each PRP, follow the TDD cycle exactly as written in the PRP file:
@@ -391,7 +444,10 @@ For each PRP, follow the TDD cycle exactly as written in the PRP file:
 
 **Next PRP:**
 ```
-Execute PRP-09: read docs/prp/09_PRP_FRONTEND-API-CLIENT.md fully,
+Execute PRP-10: read docs/prp/10_PRP_CONFIDENCE-METER-COMPONENT.md fully,
 follow the TDD cycle (write test first → RED → implement → GREEN),
 confirm all acceptance criteria. Check PROGRESS.md for context.
+
+Note: vitest v4 requires a TTY — run npm test in a real terminal,
+or use the node:test verification pattern from api-verify.mjs if needed.
 ```
