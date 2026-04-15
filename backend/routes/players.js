@@ -101,13 +101,16 @@ router.get('/player/:id/props', async (req, res, next) => {
       // Home/Away splits
       const ptsSplit = homeAwaySplit(stats, 'pts');
       const rebSplit = homeAwaySplit(stats, 'reb');
+      const astSplit = homeAwaySplit(stats, 'ast');
 
       // Hit rates (last 15 games)
       const ptsLine = oddsResult.points.line;
       const rebLine = oddsResult.rebounds.line;
+      const astLine = oddsResult.assists?.line ?? null;
       const sample  = stats.slice(0, 15);
       const ptsHits = ptsLine != null ? sample.filter((s) => s.pts > ptsLine).length : null;
       const rebHits = rebLine != null ? sample.filter((s) => s.reb > rebLine).length : null;
+      const astHits = astLine != null ? sample.filter((s) => s.ast > astLine).length : null;
 
       const isHome = nextGame?.is_home ?? null;
       const oppId  = nextGame?.opponent_id ?? null;
@@ -115,6 +118,7 @@ router.get('/player/:id/props', async (req, res, next) => {
       // Confidence
       const ptsConf = computeConfidence({ stats, statKey: 'pts', line: ptsLine, isHome, matchupRow: null, archetype, opponentId: oppId });
       const rebConf = computeConfidence({ stats, statKey: 'reb', line: rebLine, isHome, matchupRow: null, archetype, opponentId: oppId });
+      const astConf = computeConfidence({ stats, statKey: 'ast', line: astLine, isHome, matchupRow: null, archetype, opponentId: oppId });
 
       return {
         player: { id: player.id, name: playerName, archetype },
@@ -143,6 +147,20 @@ router.get('/player/:id/props', async (req, res, next) => {
             hit_rate_over:   rebHits != null ? Math.round(rebHits / sample.length * 100) : null,
             hit_rate_sample: sample.length,
             confidence:      rebConf,
+          },
+          assists: {
+            line:            astLine,
+            over_odds:       oddsResult.assists?.over_odds ?? null,
+            under_odds:      oddsResult.assists?.under_odds ?? null,
+            odds_available:  oddsResult.assists?.odds_available ?? false,
+            season_avg:      seasonAvg?.ast ?? null,
+            home_avg:        astSplit.home_avg,
+            away_avg:        astSplit.away_avg,
+            home_games:      astSplit.home_games,
+            away_games:      astSplit.away_games,
+            hit_rate_over:   astHits != null ? Math.round(astHits / sample.length * 100) : null,
+            hit_rate_sample: sample.length,
+            confidence:      astConf,
           },
         },
       };

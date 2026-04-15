@@ -305,9 +305,10 @@ export default function PropsPage() {
       </div>
 
       {/* Prop cards */}
-      <div className="grid lg:grid-cols-2 gap-5">
-        <PropCard title="Points" prop={props?.points} />
+      <div className="grid lg:grid-cols-3 gap-5">
+        <PropCard title="Points"   prop={props?.points} />
         <PropCard title="Rebounds" prop={props?.rebounds} />
+        <PropCard title="Assists"  prop={props?.assists} />
       </div>
 
       {/* Defensive Matchup */}
