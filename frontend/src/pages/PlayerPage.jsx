@@ -201,14 +201,21 @@ export default function PlayerPage() {
       {/* Recent game log */}
       <div className="mt-6 glass p-5">
         <h3 className="font-semibold">Recent games</h3>
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full text-sm">
+        <p className="text-[11px] text-slate-500 mt-1 sm:hidden">Scroll horizontally for more stats →</p>
+        <div className="mt-3 overflow-x-auto -mx-5 px-5">
+          <table className="w-full text-sm min-w-[520px]">
             <thead className="text-left text-slate-400 text-xs uppercase tracking-wider">
               <tr className="border-b border-white/10">
                 <th className="py-2 pr-3">Date</th>
                 <th className="pr-3">Opp</th>
-                <th>PTS</th><th>REB</th><th>AST</th><th>TO</th><th>STL</th><th>BLK</th>
-                <th>FG%</th><th>3P%</th><th>FT%</th><th>MIN</th>
+                <th>PTS</th><th>REB</th><th>AST</th>
+                <th className="hidden sm:table-cell">TO</th>
+                <th className="hidden sm:table-cell">STL</th>
+                <th className="hidden sm:table-cell">BLK</th>
+                <th className="hidden md:table-cell">FG%</th>
+                <th className="hidden md:table-cell">3P%</th>
+                <th className="hidden md:table-cell">FT%</th>
+                <th className="hidden sm:table-cell">MIN</th>
               </tr>
             </thead>
             <tbody>
@@ -217,16 +224,17 @@ export default function PlayerPage() {
                 const oppLabel = s.is_home === true ? `vs ${oppAbbr}` : s.is_home === false ? `@ ${oppAbbr}` : oppAbbr;
                 return (
                   <tr key={i} className="border-b border-white/5 hover:bg-white/[0.03]">
-                    <td className="py-2 pr-3 text-slate-300">{s.date || '—'}</td>
+                    <td className="py-2 pr-3 text-slate-300 whitespace-nowrap">{s.date || '—'}</td>
                     <td className="pr-3 text-slate-300 whitespace-nowrap">{oppLabel}</td>
                     <td className="font-semibold">{s.pts}</td>
                     <td>{s.reb}</td><td>{s.ast}</td>
-                    <td className="text-rose-300">{s.to ?? '—'}</td>
-                    <td>{s.stl}</td><td>{s.blk}</td>
-                    <td>{s.fg_pct != null ? (s.fg_pct * 100).toFixed(1) + '%' : '—'}</td>
-                    <td>{s.fg3_pct != null ? (s.fg3_pct * 100).toFixed(1) + '%' : '—'}</td>
-                    <td>{s.ft_pct != null ? (s.ft_pct * 100).toFixed(1) + '%' : '—'}</td>
-                    <td>{s.min}</td>
+                    <td className="hidden sm:table-cell text-rose-300">{s.to ?? '—'}</td>
+                    <td className="hidden sm:table-cell">{s.stl}</td>
+                    <td className="hidden sm:table-cell">{s.blk}</td>
+                    <td className="hidden md:table-cell">{s.fg_pct != null ? (s.fg_pct * 100).toFixed(1) + '%' : '—'}</td>
+                    <td className="hidden md:table-cell">{s.fg3_pct != null ? (s.fg3_pct * 100).toFixed(1) + '%' : '—'}</td>
+                    <td className="hidden md:table-cell">{s.ft_pct != null ? (s.ft_pct * 100).toFixed(1) + '%' : '—'}</td>
+                    <td className="hidden sm:table-cell">{s.min}</td>
                   </tr>
                 );
               })}
