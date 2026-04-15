@@ -14,14 +14,24 @@ function oddsColor(odds) {
   return odds > 0 ? 'text-emerald-300' : 'text-white';
 }
 
-function HitRateBar({ hitRate, sample }) {
+function HitRateBar({ hitRate, sample, line }) {
   if (hitRate == null) return <span className="text-slate-500 text-xs">No data</span>;
   const hits = Math.round((hitRate / 100) * sample);
+  const tooltip = `Hit rate: how often this player exceeded the ${line != null ? line + ' line' : 'projected line'} in the last ${sample} games. ${hits} out of ${sample} games went OVER.`;
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 group/hr relative">
       <div className="flex justify-between text-xs text-slate-400">
-        <span>Hit rate (last {sample}g)</span>
+        <span className="flex items-center gap-1 cursor-help" title={tooltip}>
+          Hit rate (last {sample}g)
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-500">
+            <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01" strokeLinecap="round"/>
+          </svg>
+        </span>
         <span>{hits}/{sample} ({hitRate}%)</span>
+      </div>
+      {/* Hover tooltip */}
+      <div className="absolute bottom-full left-0 mb-2 hidden group-hover/hr:block z-20 w-64 rounded-xl bg-[#0B0F1A] border border-white/10 p-3 text-xs text-slate-300 shadow-xl pointer-events-none">
+        {tooltip}
       </div>
       <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
         <div
@@ -82,7 +92,7 @@ function PropCard({ title, prop }) {
       </div>
 
       {/* Hit rate bar */}
-      <HitRateBar hitRate={prop.hit_rate_over} sample={prop.hit_rate_sample} />
+      <HitRateBar hitRate={prop.hit_rate_over} sample={prop.hit_rate_sample} line={prop.line} />
 
       {/* Confidence meter */}
       {prop.confidence && (
@@ -98,24 +108,47 @@ function PropCard({ title, prop }) {
   );
 }
 
-function MatchupSection({ offenderId }) {
+// Group positions so PG matches PG+SG+G, SF matches SF+PF+F, C matches C
+function samePositionGroup(posA, posB) {
+  if (!posA || !posB) return true; // unknown — show all
+  const guards   = ['PG', 'SG', 'G'];
+  const forwards = ['SF', 'PF', 'F'];
+  const centers  = ['C'];
+  const group = (p) =>
+    guards.includes(p)   ? 'G' :
+    forwards.includes(p) ? 'F' :
+    centers.includes(p)  ? 'C' : null;
+  const ga = group(posA.toUpperCase());
+  const gb = group(posB.toUpperCase());
+  if (!ga || !gb) return true;
+  return ga === gb;
+}
+
+function MatchupSection({ offenderId, playerPosition }) {
   const [query,    setQuery]    = useState('');
   const [results,  setResults]  = useState([]);
   const [selected, setSelected] = useState(null);
   const [matchup,  setMatchup]  = useState(null);
   const [status,   setStatus]   = useState('idle'); // idle|searching|loading|data|no_data|error
 
-  // Debounced search
+  // Debounced search — filter by same position group
   useEffect(() => {
     if (!query.trim()) { setResults([]); return; }
     setStatus('searching');
     const timer = setTimeout(() => {
       api.search(query)
-        .then((r) => { setResults(r.data || []); setStatus('idle'); })
+        .then((r) => {
+          const all = r.data || [];
+          const filtered = playerPosition
+            ? all.filter((p) => samePositionGroup(playerPosition, p.position))
+            : all;
+          setResults(filtered);
+          setStatus('idle');
+        })
         .catch(() => { setResults([]); setStatus('idle'); });
     }, 300);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, playerPosition]);
 
   function handleAnalyze() {
     if (!selected) return;
@@ -135,9 +168,16 @@ function MatchupSection({ offenderId }) {
 
   return (
     <div className="glass p-5 space-y-5">
-      <h3 className="font-semibold text-sm uppercase tracking-widest text-slate-400">
-        Defensive Matchup
-      </h3>
+      <div className="flex items-center gap-3">
+        <h3 className="font-semibold text-sm uppercase tracking-widest text-slate-400">
+          Defensive Matchup
+        </h3>
+        {playerPosition && (
+          <span className="text-[10px] bg-violet-500/10 border border-violet-500/20 text-violet-300 px-2 py-0.5 rounded-full">
+            {playerPosition} defenders
+          </span>
+        )}
+      </div>
 
       {/* Search */}
       <div className="flex gap-2">
@@ -160,6 +200,7 @@ function MatchupSection({ offenderId }) {
                 >
                   {p.first_name} {p.last_name}
                   <span className="ml-2 text-slate-500 text-xs">{p.team?.full_name}</span>
+                  {p.position && <span className="ml-1 text-slate-600 text-xs">· {p.position}</span>}
                 </button>
               ))}
             </div>
@@ -281,7 +322,7 @@ export default function PropsPage() {
     <div className="mx-auto max-w-6xl px-6 py-10 space-y-6">
       {/* Back link */}
       <Link
-        to={`/player/${id}`}
+        to={`/app/player/${id}`}
         className="text-sm text-slate-400 hover:text-white inline-flex items-center gap-1.5"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -314,7 +355,7 @@ export default function PropsPage() {
       </div>
 
       {/* Defensive Matchup */}
-      <MatchupSection offenderId={id} />
+      <MatchupSection offenderId={id} playerPosition={player.position} />
     </div>
   );
 }

@@ -130,7 +130,7 @@ router.get('/player/:id/props', async (req, res, next) => {
       const astConf = computeConfidence({ stats, statKey: 'ast', line: astLine, isHome, matchupRow: null, archetype, opponentId: oppId });
 
       return {
-        player: { id: player.id, name: playerName, archetype },
+        player: { id: player.id, name: playerName, archetype, position: player.position || '' },
         next_game: nextGame
           ? { opponent_id: nextGame.opponent_id, opponent_name: nextGame.opponent_name, is_home: nextGame.is_home }
           : null,
