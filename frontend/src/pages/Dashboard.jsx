@@ -9,6 +9,7 @@ const REFRESH_MS = 15000;
 
 export default function Dashboard() {
   const [trending, setTrending] = useState(null);
+  const [avgPpg, setAvgPpg] = useState(null);
   const [players, setPlayers] = useState(null);      // paginated list
   const [cursor, setCursor] = useState(null);        // next cursor
   const [loadingMore, setLoadingMore] = useState(false);
@@ -29,11 +30,26 @@ export default function Dashboard() {
     return () => clearTimeout(id);
   }, [search]);
 
-  // Trending row
+  // Trending row + avg PPG computation
   useEffect(() => {
     let cancel = false;
     api.top()
-      .then((r) => !cancel && setTrending(r.data))
+      .then((r) => {
+        if (cancel) return;
+        const players = r.data || [];
+        setTrending(players);
+        // Compute real avg PPG from top players' stats (parallel, cached on backend)
+        Promise.all(players.map((p) => api.stats(p.id).catch(() => null)))
+          .then((results) => {
+            if (cancel) return;
+            const ppgs = results
+              .map((s) => s?.averages?.pts)
+              .filter((v) => v != null);
+            if (ppgs.length) {
+              setAvgPpg(+(ppgs.reduce((a, b) => a + b, 0) / ppgs.length).toFixed(1));
+            }
+          });
+      })
       .catch((e) => !cancel && setErr(e.message));
     return () => { cancel = true; };
   }, [tick]);
@@ -95,7 +111,7 @@ export default function Dashboard() {
 
       <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatTile label="Shown" value={totalShown || '—'} />
-        <StatTile label="Avg PPG (Top 10)" value="28.7" accent="secondary" />
+        <StatTile label="Avg PPG (Top 10)" value={avgPpg ?? '—'} accent="secondary" />
         <StatTile label="Teams" value="30" />
         <StatTile label="Live" value="ON" accent="secondary" />
       </div>
