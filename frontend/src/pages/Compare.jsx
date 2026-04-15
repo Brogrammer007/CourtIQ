@@ -38,10 +38,12 @@ function scoreRadar(a) {
 
 export default function Compare() {
   const [allPlayers, setAllPlayers] = useState([]);
+  const [loadingPlayers, setLoadingPlayers] = useState(true);
   const [a, setA] = useState(null);
   const [b, setB] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState(null);
 
   useEffect(() => {
     // Load all players (paginate through cursor) for the dropdowns
@@ -56,16 +58,23 @@ export default function Compare() {
         if (r.next_cursor == null) break;
         cursor = r.next_cursor;
       }
-      if (!cancel) setAllPlayers(acc);
+      if (!cancel) {
+        setAllPlayers(acc);
+        setLoadingPlayers(false);
+      }
     }
     loadAll();
     return () => { cancel = true; };
   }, []);
 
   useEffect(() => {
-    if (!a || !b) { setResult(null); return; }
+    if (!a || !b) { setResult(null); setErr(null); return; }
     setLoading(true);
-    api.compare(a, b).then(setResult).finally(() => setLoading(false));
+    setErr(null);
+    api.compare(a, b)
+      .then(setResult)
+      .catch((e) => setErr(e.message || 'Failed to load comparison'))
+      .finally(() => setLoading(false));
   }, [a, b]);
 
   const radarData =
@@ -83,15 +92,25 @@ export default function Compare() {
       <h1 className="mt-3 text-4xl font-bold tracking-tight">Side-by-side breakdown</h1>
       <p className="text-slate-400 mt-1 text-sm">Pick two players. See averages, form, and predictions head-to-head.</p>
 
-      <div className="mt-8 grid md:grid-cols-2 gap-5">
-        <PlayerPicker label="Player A" value={a} onChange={setA} options={allPlayers} />
-        <PlayerPicker label="Player B" value={b} onChange={setB} options={allPlayers} />
-      </div>
+      {loadingPlayers ? (
+        <div className="mt-8 grid md:grid-cols-2 gap-5">
+          <SkeletonCard lines={2} /><SkeletonCard lines={2} />
+        </div>
+      ) : (
+        <div className="mt-8 grid md:grid-cols-2 gap-5">
+          <PlayerPicker label="Player A" value={a} onChange={setA} options={allPlayers} />
+          <PlayerPicker label="Player B" value={b} onChange={setB} options={allPlayers} />
+        </div>
+      )}
 
       {loading && (
         <div className="mt-8 grid md:grid-cols-2 gap-5">
           <SkeletonCard /><SkeletonCard />
         </div>
+      )}
+
+      {err && !loading && (
+        <div className="mt-8 glass p-6 text-sm text-rose-300">⚠ {err}</div>
       )}
 
       {result && radarData && (
@@ -145,7 +164,7 @@ export default function Compare() {
         </>
       )}
 
-      {!a || !b ? (
+      {!loadingPlayers && !loading && (!a || !b) && !result && !err ? (
         <div className="mt-10 glass p-10 text-center text-slate-400">
           Pick two players above to generate the comparison.
         </div>
