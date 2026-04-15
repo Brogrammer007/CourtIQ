@@ -30,7 +30,7 @@ export default function PlayerPage() {
 
   useEffect(() => {
     let cancel = false;
-    setPlayer(null); setStatsRes(null);
+    setPlayer(null); setStatsRes(null); setErr(null);
     Promise.all([api.player(id), api.stats(id)])
       .then(([p, s]) => {
         if (cancel) return;
@@ -43,7 +43,28 @@ export default function PlayerPage() {
     return () => { cancel = true; clearInterval(iv); };
   }, [id]);
 
-  if (err) return <div className="mx-auto max-w-5xl px-6 py-10 text-rose-300">⚠ {err}</div>;
+  if (err) {
+    const is404 = /^404\b/.test(err);
+    return (
+      <div className="mx-auto max-w-xl px-6 py-16">
+        <div className="glass p-8 text-center space-y-4">
+          <div className="text-5xl">{is404 ? '🔍' : '⚠️'}</div>
+          <h2 className="text-2xl font-bold gradient-text">
+            {is404 ? 'Player not found' : 'Something went wrong'}
+          </h2>
+          <p className="text-slate-400 text-sm">
+            {is404
+              ? `We couldn't find a player with ID ${id}. They may be retired or the link is wrong.`
+              : err}
+          </p>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <Link to="/app" className="btn-primary">Back to dashboard</Link>
+            <Link to="/" className="btn-ghost">Go home</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!player) return (
     <div className="mx-auto max-w-5xl px-6 py-10 space-y-6">
       <SkeletonCard lines={2} />

@@ -302,9 +302,28 @@ export default function PropsPage() {
     return () => { cancelled = true; };
   }, [id]);
 
-  if (err) return (
-    <div className="mx-auto max-w-5xl px-6 py-10 text-rose-300">⚠ {err}</div>
-  );
+  if (err) {
+    const is404 = /^404\b/.test(err);
+    return (
+      <div className="mx-auto max-w-xl px-6 py-16">
+        <div className="glass p-8 text-center space-y-4">
+          <div className="text-5xl">{is404 ? '🔍' : '⚠️'}</div>
+          <h2 className="text-2xl font-bold gradient-text">
+            {is404 ? 'Props unavailable' : 'Something went wrong'}
+          </h2>
+          <p className="text-slate-400 text-sm">
+            {is404
+              ? "We don't have prop lines for this player right now. Check back before their next game."
+              : err}
+          </p>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <Link to={`/app/player/${id}`} className="btn-primary">Back to player</Link>
+            <Link to="/app" className="btn-ghost">Dashboard</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!data) return (
     <div className="mx-auto max-w-5xl px-6 py-10 space-y-6">
