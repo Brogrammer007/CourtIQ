@@ -127,7 +127,7 @@ export default function Hero() {
           <motion.div
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute -left-6 -bottom-6 glass p-4 w-52 shadow-glowCyan"
+            className="absolute -left-6 -bottom-16 glass p-4 w-52 shadow-glowCyan"
           >
             <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Form Index</div>
             <div className="text-2xl font-bold gradient-text mt-1">92 / 100</div>
