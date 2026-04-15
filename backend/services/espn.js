@@ -1,11 +1,35 @@
 // ESPN's public NBA API — no auth required. Great free source for complete rosters.
+import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dir = dirname(fileURLToPath(import.meta.url));
+const ROSTER_CACHE_FILE = resolve(__dir, '../data/espn-roster.json');
+const ROSTER_CACHE_TTL  = 24 * 60 * 60 * 1000; // 24 hours
+
 const TEAMS_URL = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams';
 const ROSTER_URL = (id) =>
   `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/${id}/roster`;
 
-// Lazy singleton: fetch all team rosters once, cache forever (until process restart).
+// In-memory singleton
 let allPlayersPromise = null;
 let idIndex = null;
+
+// Load roster from disk if available and fresh
+function loadRosterFromDisk() {
+  try {
+    if (!existsSync(ROSTER_CACHE_FILE)) return null;
+    const raw  = JSON.parse(readFileSync(ROSTER_CACHE_FILE, 'utf8'));
+    if (!raw.savedAt || Date.now() - raw.savedAt > ROSTER_CACHE_TTL) return null;
+    return raw.players || null;
+  } catch { return null; }
+}
+
+function saveRosterToDisk(players) {
+  try {
+    writeFileSync(ROSTER_CACHE_FILE, JSON.stringify({ savedAt: Date.now(), players }));
+  } catch { /* non-fatal */ }
+}
 
 function normalizeAthlete(a, team) {
   return {
@@ -41,14 +65,28 @@ async function fetchRoster(teamId) {
 
 export async function loadAllEspnPlayers() {
   if (allPlayersPromise) return allPlayersPromise;
+
+  // Try disk cache first (instant load, no HTTP)
+  const cached = loadRosterFromDisk();
+  if (cached) {
+    idIndex = new Map(cached.map((p) => [String(p.id), p]));
+    allPlayersPromise = Promise.resolve(cached);
+    return allPlayersPromise;
+  }
+
+  // Fetch from ESPN with per-request timeout (10s per team)
   allPlayersPromise = (async () => {
     const teams = await fetchTeams();
     const rosters = await Promise.all(
       teams.map(async (t) => {
         try {
-          const r = await fetchRoster(t.id);
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 10_000);
+          const res = await fetch(ROSTER_URL(t.id), { signal: ctrl.signal });
+          clearTimeout(timer);
+          if (!res.ok) return [];
+          const r = await res.json();
           const athletes = Array.isArray(r.athletes) ? r.athletes : [];
-          // handle both flat [{...}] and grouped [{items:[...]}] shapes
           const flat = athletes.flatMap((a) => (a.items ? a.items : [a]));
           return flat.map((a) => normalizeAthlete(a, t));
         } catch {
@@ -57,15 +95,15 @@ export async function loadAllEspnPlayers() {
       })
     );
     const players = rosters.flat().filter((p) => p.id && p.first_name);
-    // Sort: a rough "star rank" by shorter last name + higher team wins would need more data;
-    // just alphabetize as default, but float popular names on top in the service.
     players.sort((a, b) => a.last_name.localeCompare(b.last_name));
     idIndex = new Map(players.map((p) => [String(p.id), p]));
+    saveRosterToDisk(players); // persist for next startup
     return players;
   })().catch((err) => {
-    allPlayersPromise = null; // allow retry on next call
+    allPlayersPromise = null;
     throw err;
   });
+
   return allPlayersPromise;
 }
 

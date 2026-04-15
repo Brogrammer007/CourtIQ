@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import playersRouter from './routes/players.js';
+import { loadAllEspnPlayers } from './services/espn.js';
 
 const app  = express();
 const PORT = process.env.PORT || 4000;
@@ -24,4 +25,8 @@ app.use((err, _req, res, _next) => {
 
 app.listen(PORT, () => {
   console.log(`🏀 CourtIQ API listening on :${PORT}`);
+  // Pre-warm ESPN roster cache in background — first request will be instant
+  loadAllEspnPlayers()
+    .then((p) => console.log(`✓ ESPN roster ready (${p.length} players)`))
+    .catch(() => console.warn('⚠ ESPN roster pre-warm failed — will retry on first request'));
 });
