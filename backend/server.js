@@ -1,21 +1,8 @@
-// Dynamic imports so we can pinpoint any hang during loading
-const start = Date.now();
-
-console.log('[boot] starting...');
-
-const { default: dotenv } = await import('dotenv');
-dotenv.config();
-console.log('[boot] dotenv OK', Date.now() - start, 'ms');
-
-const { default: express } = await import('express');
-console.log('[boot] express OK', Date.now() - start, 'ms');
-
-const { default: cors }   = await import('cors');
-const { default: morgan } = await import('morgan');
-console.log('[boot] cors+morgan OK', Date.now() - start, 'ms');
-
-const { default: playersRouter } = await import('./routes/players.js');
-console.log('[boot] routes OK', Date.now() - start, 'ms');
+import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import playersRouter from './routes/players.js';
 
 const app  = express();
 const PORT = process.env.PORT || 4000;
