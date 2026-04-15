@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import Landing from './pages/Landing.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import PlayerPage from './pages/PlayerPage.jsx';
@@ -9,24 +10,28 @@ import Compare from './pages/Compare.jsx';
 import Predictions from './pages/Predictions.jsx';
 import PropsPage from './pages/PropsPage.jsx';
 
+const withBoundary = (el) => <ErrorBoundary scope="route">{el}</ErrorBoundary>;
+
 export default function App() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/app" element={<Dashboard />} />
-          <Route path="/app/player/:id" element={<PlayerPage />} />
-          <Route path="/app/player/:id/props" element={<PropsPage />} />
-          <Route path="/app/favorites" element={<Favorites />} />
-          <Route path="/app/compare" element={<Compare />} />
-          <Route path="/app/predictions" element={<Predictions />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
-      <Footer />
-    </div>
+    <ErrorBoundary scope="app">
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={withBoundary(<Landing />)} />
+            <Route path="/app" element={withBoundary(<Dashboard />)} />
+            <Route path="/app/player/:id" element={withBoundary(<PlayerPage />)} />
+            <Route path="/app/player/:id/props" element={withBoundary(<PropsPage />)} />
+            <Route path="/app/favorites" element={withBoundary(<Favorites />)} />
+            <Route path="/app/compare" element={withBoundary(<Compare />)} />
+            <Route path="/app/predictions" element={withBoundary(<Predictions />)} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </ErrorBoundary>
   );
 }
 
