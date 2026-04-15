@@ -1,10 +1,23 @@
-import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
-import playersRouter from './routes/players.js';
+// Dynamic imports so we can pinpoint any hang during loading
+const start = Date.now();
 
-const app = express();
+console.log('[boot] starting...');
+
+const { default: dotenv } = await import('dotenv');
+dotenv.config();
+console.log('[boot] dotenv OK', Date.now() - start, 'ms');
+
+const { default: express } = await import('express');
+console.log('[boot] express OK', Date.now() - start, 'ms');
+
+const { default: cors }   = await import('cors');
+const { default: morgan } = await import('morgan');
+console.log('[boot] cors+morgan OK', Date.now() - start, 'ms');
+
+const { default: playersRouter } = await import('./routes/players.js');
+console.log('[boot] routes OK', Date.now() - start, 'ms');
+
+const app  = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
@@ -17,7 +30,6 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api', playersRouter);
 
-// Centralized error handler — never leaks stack in prod.
 app.use((err, _req, res, _next) => {
   console.error('[courtiq]', err);
   res.status(500).json({ error: err.message || 'Internal error' });

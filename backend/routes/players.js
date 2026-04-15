@@ -137,6 +137,7 @@ router.get('/player/:id/props', async (req, res, next) => {
         props: {
           points: {
             ...oddsResult.points,
+            line:            ptsLine,
             season_avg:      seasonAvg?.pts ?? null,
             home_avg:        ptsSplit.home_avg,
             away_avg:        ptsSplit.away_avg,
@@ -148,6 +149,7 @@ router.get('/player/:id/props', async (req, res, next) => {
           },
           rebounds: {
             ...oddsResult.rebounds,
+            line:            rebLine,
             season_avg:      seasonAvg?.reb ?? null,
             home_avg:        rebSplit.home_avg,
             away_avg:        rebSplit.away_avg,
