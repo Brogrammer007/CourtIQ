@@ -18,7 +18,7 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/app" element={<Dashboard />} />
           <Route path="/app/player/:id" element={<PlayerPage />} />
-          <Route path="/player/:id/props" element={<PropsPage />} />
+          <Route path="/app/player/:id/props" element={<PropsPage />} />
           <Route path="/app/favorites" element={<Favorites />} />
           <Route path="/app/compare" element={<Compare />} />
           <Route path="/app/predictions" element={<Predictions />} />
