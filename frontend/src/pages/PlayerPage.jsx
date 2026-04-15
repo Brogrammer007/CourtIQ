@@ -17,7 +17,16 @@ export default function PlayerPage() {
 
   const [player, setPlayer] = useState(null);
   const [statsRes, setStatsRes] = useState(null);
+  const [teamMap, setTeamMap] = useState({});
   const [err, setErr] = useState(null);
+
+  useEffect(() => {
+    api.teams().then((r) => {
+      const map = {};
+      (r.data || []).forEach((t) => { map[String(t.id)] = t.abbreviation || t.city; });
+      setTeamMap(map);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     let cancel = false;
@@ -88,7 +97,7 @@ export default function PlayerPage() {
           {fav ? 'Favorited' : 'Add to Favorites'}
         </button>
         <Link
-          to={`/player/${id}/props`}
+          to={`/app/player/${id}/props`}
           className="btn-ghost"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -196,20 +205,31 @@ export default function PlayerPage() {
           <table className="w-full text-sm">
             <thead className="text-left text-slate-400 text-xs uppercase tracking-wider">
               <tr className="border-b border-white/10">
-                <th className="py-2 pr-3">Date</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>FG%</th><th>3P%</th><th>MIN</th>
+                <th className="py-2 pr-3">Date</th>
+                <th className="pr-3">Opp</th>
+                <th>PTS</th><th>REB</th><th>AST</th><th>TO</th><th>STL</th><th>BLK</th>
+                <th>FG%</th><th>3P%</th><th>FT%</th><th>MIN</th>
               </tr>
             </thead>
             <tbody>
-              {stats.map((s, i) => (
-                <tr key={i} className="border-b border-white/5 hover:bg-white/[0.03]">
-                  <td className="py-2 pr-3 text-slate-300">{s.date || '—'}</td>
-                  <td className="font-semibold">{s.pts}</td>
-                  <td>{s.reb}</td><td>{s.ast}</td><td>{s.stl}</td><td>{s.blk}</td>
-                  <td>{(s.fg_pct*100).toFixed(0)}%</td>
-                  <td>{(s.fg3_pct*100).toFixed(0)}%</td>
-                  <td>{s.min}</td>
-                </tr>
-              ))}
+              {stats.map((s, i) => {
+                const oppAbbr = s.opponent_id != null ? (teamMap[String(s.opponent_id)] || '—') : '—';
+                const oppLabel = s.is_home === true ? `vs ${oppAbbr}` : s.is_home === false ? `@ ${oppAbbr}` : oppAbbr;
+                return (
+                  <tr key={i} className="border-b border-white/5 hover:bg-white/[0.03]">
+                    <td className="py-2 pr-3 text-slate-300">{s.date || '—'}</td>
+                    <td className="pr-3 text-slate-300 whitespace-nowrap">{oppLabel}</td>
+                    <td className="font-semibold">{s.pts}</td>
+                    <td>{s.reb}</td><td>{s.ast}</td>
+                    <td className="text-rose-300">{s.to ?? '—'}</td>
+                    <td>{s.stl}</td><td>{s.blk}</td>
+                    <td>{s.fg_pct != null ? (s.fg_pct * 100).toFixed(1) + '%' : '—'}</td>
+                    <td>{s.fg3_pct != null ? (s.fg3_pct * 100).toFixed(1) + '%' : '—'}</td>
+                    <td>{s.ft_pct != null ? (s.ft_pct * 100).toFixed(1) + '%' : '—'}</td>
+                    <td>{s.min}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

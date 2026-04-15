@@ -27,8 +27,10 @@ export function normalizeStat(row, ownTeamId) {
     ast: num(row.ast),
     stl: num(row.stl),
     blk: num(row.blk),
+    to: num(row.to),
     fg_pct: num(row.fg_pct),
     fg3_pct: num(row.fg3_pct),
+    ft_pct: num(row.ft_pct),
     min: row.min ?? '',
   };
 }
@@ -42,10 +44,12 @@ export function averages(stats) {
       ast: acc.ast + s.ast,
       stl: acc.stl + s.stl,
       blk: acc.blk + s.blk,
+      to: acc.to + s.to,
       fg_pct: acc.fg_pct + s.fg_pct,
       fg3_pct: acc.fg3_pct + s.fg3_pct,
+      ft_pct: acc.ft_pct + s.ft_pct,
     }),
-    { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, fg_pct: 0, fg3_pct: 0 }
+    { pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, fg_pct: 0, fg3_pct: 0, ft_pct: 0 }
   );
   const n = stats.length;
   return {
@@ -54,8 +58,10 @@ export function averages(stats) {
     ast: +(sum.ast / n).toFixed(1),
     stl: +(sum.stl / n).toFixed(2),
     blk: +(sum.blk / n).toFixed(2),
+    to: +(sum.to / n).toFixed(1),
     fg_pct: +(sum.fg_pct / n).toFixed(3),
     fg3_pct: +(sum.fg3_pct / n).toFixed(3),
+    ft_pct: +(sum.ft_pct / n).toFixed(3),
   };
 }
 

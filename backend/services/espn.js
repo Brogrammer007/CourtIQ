@@ -183,8 +183,10 @@ export async function espnGetPlayerStats(id) {
           ast: num(s[8]),
           blk: num(s[9]),
           stl: num(s[10]),
+          to: num(s[12]),
           fg_pct: +(num(s[2]) / 100).toFixed(3),
           fg3_pct: +(num(s[4]) / 100).toFixed(3),
+          ft_pct: +(num(s[6]) / 100).toFixed(3),
         });
       }
     }
