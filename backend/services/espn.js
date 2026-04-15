@@ -159,36 +159,35 @@ export async function espnGetPlayerStats(id) {
 
 // Returns the next unplayed game for a given ESPN team ID.
 // Returns { opponent_id, opponent_name, is_home, date } or null.
+// Tries regular season (2), playoffs (3), and play-in (5) in that order.
 export async function getNextGame(teamId) {
-  let res;
-  try {
-    res = await fetch(SCHEDULE_URL(teamId));
-  } catch {
-    return null;
-  }
-  if (!res.ok) return null;
-
-  const j = await res.json();
   const today = new Date().toISOString().slice(0, 10); // 'YYYY-MM-DD'
-  const events = j.events || [];
 
-  for (const event of events) {
-    const dateStr = event.date ? event.date.slice(0, 10) : null;
-    if (!dateStr || dateStr < today) continue;
+  for (const seasontype of [2, 3, 5]) {
+    let j;
+    try {
+      const res = await fetch(`${SCHEDULE_URL(teamId)}?seasontype=${seasontype}`);
+      if (!res.ok) continue;
+      j = await res.json();
+    } catch { continue; }
 
-    const competitions = event.competitions || [];
-    for (const comp of competitions) {
-      const competitors = comp.competitors || [];
-      const us   = competitors.find((c) => String(c.team?.id) === String(teamId));
-      const them = competitors.find((c) => String(c.team?.id) !== String(teamId));
-      if (!us || !them) continue;
+    for (const event of (j.events || [])) {
+      const dateStr = event.date ? event.date.slice(0, 10) : null;
+      if (!dateStr || dateStr < today) continue;
 
-      return {
-        opponent_id:   Number(them.team.id),
-        opponent_name: them.team.displayName || them.team.name || '',
-        is_home:       us.homeAway?.trim() === 'home',
-        date:          dateStr,
-      };
+      for (const comp of (event.competitions || [])) {
+        const competitors = comp.competitors || [];
+        const us   = competitors.find((c) => String(c.team?.id) === String(teamId));
+        const them = competitors.find((c) => String(c.team?.id) !== String(teamId));
+        if (!us || !them) continue;
+
+        return {
+          opponent_id:   Number(them.team.id),
+          opponent_name: them.team.displayName || them.team.name || '',
+          is_home:       us.homeAway?.trim() === 'home',
+          date:          dateStr,
+        };
+      }
     }
   }
 

@@ -42,7 +42,7 @@ function PropCard({ title, prop }) {
         <h3 className="font-semibold text-sm uppercase tracking-widest text-slate-400">{title}</h3>
         {!prop.odds_available && (
           <span className="text-[10px] bg-slate-700 text-slate-400 px-2 py-0.5 rounded-full border border-white/10">
-            No live odds
+            Projected line
           </span>
         )}
       </div>
@@ -205,11 +205,13 @@ function MatchupSection({ offenderId }) {
           {/* Stats grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: 'Possessions', value: matchup.matchup_data.partial_possessions },
-              { label: 'PTS/Poss',    value: matchup.matchup_data.pts_per_possession ?? '—' },
-              { label: 'FG% Allowed', value: matchup.matchup_data.fg_pct_allowed != null
+              { label: 'Games',    value: matchup.matchup_data.games_played },
+              { label: 'PTS/Game', value: matchup.matchup_data.pts_per_possession != null
+                  ? matchup.matchup_data.pts_per_possession.toFixed(1) : '—' },
+              { label: 'FG%',      value: matchup.matchup_data.fg_pct_allowed != null
                   ? `${(matchup.matchup_data.fg_pct_allowed * 100).toFixed(1)}%` : '—' },
-              { label: 'DEF REB',     value: matchup.matchup_data.def_reb_in_matchup ?? '—' },
+              { label: 'REB',      value: matchup.matchup_data.def_reb_in_matchup != null
+                  ? matchup.matchup_data.def_reb_in_matchup.toFixed(1) : '—' },
             ].map(({ label, value }) => (
               <div key={label} className="rounded-xl bg-white/[0.04] border border-white/10 p-3 text-center">
                 <div className="text-[10px] uppercase tracking-widest text-slate-500">{label}</div>

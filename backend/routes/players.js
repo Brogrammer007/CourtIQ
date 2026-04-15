@@ -18,10 +18,18 @@ import {
 import { computeConfidence } from '../utils/confidence.js';
 import { getPlayerProps } from '../services/odds.js';
 import { getNextGame } from '../services/espn.js';
-import { getMatchup } from '../services/nbaStats.js';
+// nbaStats import removed — matchup now computed from ESPN gamelog
 
 const TTL = Number(process.env.CACHE_TTL_SECONDS || 60);
 const router = Router();
+
+// Round to nearest 0.5 — standard prop line format
+function projectedLine(stats, key, n = 10) {
+  const slice = stats.slice(0, n).filter((s) => s[key] != null);
+  if (!slice.length) return null;
+  const avg = slice.reduce((sum, s) => sum + s[key], 0) / slice.length;
+  return Math.round(avg * 2) / 2;
+}
 
 // ---- Players --------------------------------------------------------------
 
@@ -104,9 +112,10 @@ router.get('/player/:id/props', async (req, res, next) => {
       const astSplit = homeAwaySplit(stats, 'ast');
 
       // Hit rates (last 15 games)
-      const ptsLine = oddsResult.points.line;
-      const rebLine = oddsResult.rebounds.line;
-      const astLine = oddsResult.assists?.line ?? null;
+      // Use live line if available, otherwise project from rolling 10-game avg
+      const ptsLine = oddsResult.points.line  ?? projectedLine(stats, 'pts');
+      const rebLine = oddsResult.rebounds.line ?? projectedLine(stats, 'reb');
+      const astLine = oddsResult.assists?.line ?? projectedLine(stats, 'ast');
       const sample  = stats.slice(0, 15);
       const ptsHits = ptsLine != null ? sample.filter((s) => s.pts > ptsLine).length : null;
       const rebHits = rebLine != null ? sample.filter((s) => s.reb > rebLine).length : null;
@@ -261,70 +270,66 @@ router.get('/teams', async (_req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ---- Defensive matchup: player vs specific defender -----------------------
+// ---- Defensive matchup: offender's stats in games vs defender's team -------
+// Uses ESPN gamelog data — no reliance on stats.nba.com
 
 router.get('/player/:id/matchup/:defenderId', async (req, res, next) => {
   try {
     const { id, defenderId } = req.params;
 
-    const result = await cached(`matchup:${id}:${defenderId}`, 86400, async () => {
-      // Resolve both ESPN players in parallel
-      const [offPlayer, defPlayer] = await Promise.all([
-        cached(`player:${id}`, TTL, () => getPlayer(id)),
+    const result = await cached(`matchup:${id}:${defenderId}`, TTL * 30, async () => {
+      const [{ player, stats }, defPlayer] = await Promise.all([
+        loadPlayerStatPack(id),
         cached(`player:${defenderId}`, TTL, () => getPlayer(defenderId)),
       ]);
 
       if (!defPlayer) return { error: 'defender_not_found' };
-      if (!offPlayer) return { error: 'offender_not_found' };
+      if (!player)    return { error: 'offender_not_found' };
 
-      let row;
-      try {
-        row = await getMatchup(offPlayer, defPlayer);
-      } catch (err) {
-        if (err.message === 'MATCHUP_UNAVAILABLE') return { error: 'matchup_unavailable' };
-        throw err;
-      }
+      const defTeamId = defPlayer.team?.id;
+      if (!defTeamId) return { error: 'no_matchup_data' };
 
-      if (!row) return { error: 'no_matchup_data' };
+      // Games where offender faced the defender's team this season
+      const vsGames = stats.filter(
+        (s) => s.opponent_id != null && String(s.opponent_id) === String(defTeamId)
+      );
 
-      // Compute vs_season_avg
-      const { stats } = await loadPlayerStatPack(id);
+      if (!vsGames.length) return { error: 'no_matchup_data' };
+
       const seasonAvg = averages(stats);
-      const ptsPerPoss = row.partial_possessions > 0
-        ? +(row.player_pts / row.partial_possessions).toFixed(2)
-        : null;
+      const vsAvg     = averages(vsGames);
 
-      // Verdict: compare FG% allowed vs league average (0.470)
-      const fgDiff  = +(((row.fg_pct ?? 0.470) - 0.470) * 100).toFixed(1);
-      const verdict = fgDiff <= -5
+      const ptsDiff = percentDiff(vsAvg.pts, seasonAvg.pts);
+      const fgDiff  = percentDiff(vsAvg.fg_pct, seasonAvg.fg_pct);
+
+      const verdict = ptsDiff <= -10
         ? { label: 'Tough matchup',     tone: 'down', emoji: '🧊' }
-        : fgDiff >= 5
+        : ptsDiff >= 10
         ? { label: 'Favorable matchup', tone: 'up',   emoji: '🔥' }
         : { label: 'Neutral matchup',   tone: 'flat',  emoji: '⚖️' };
 
       return {
-        offender: { id: offPlayer.id, name: `${offPlayer.first_name} ${offPlayer.last_name}` },
+        offender: { id: player.id,    name: `${player.first_name} ${player.last_name}` },
         defender: { id: defPlayer.id, name: `${defPlayer.first_name} ${defPlayer.last_name}` },
         matchup_data: {
-          games_played:        row.games_played,
-          partial_possessions: row.partial_possessions,
-          pts_per_possession:  ptsPerPoss,
-          fg_pct_allowed:      row.fg_pct,
-          def_reb_in_matchup:  row.def_reb,
-          sample_note:         `${row.partial_possessions} possessions across ${row.games_played} game${row.games_played !== 1 ? 's' : ''}`,
+          games_played:        vsGames.length,
+          partial_possessions: vsGames.length, // re-used field — means "games" here
+          pts_per_possession:  vsAvg.pts,      // re-used field — means "pts per game" here
+          fg_pct_allowed:      vsAvg.fg_pct,
+          def_reb_in_matchup:  vsAvg.reb,
+          sample_note: `${vsGames.length} game${vsGames.length !== 1 ? 's' : ''} vs ${defPlayer.team?.full_name || 'their team'} this season`,
         },
         vs_season_avg: {
-          pts_diff_pct:    seasonAvg ? percentDiff(ptsPerPoss ?? 0, seasonAvg.pts / 36) : null,
-          fg_pct_diff_pct: seasonAvg ? percentDiff(row.fg_pct ?? 0, seasonAvg.fg_pct)  : null,
+          pts_diff_pct:    ptsDiff,
+          fg_pct_diff_pct: fgDiff,
         },
         verdict,
       };
     });
 
-    if (result?.error === 'defender_not_found')  return res.status(404).json({ error: 'Defender not found.' });
-    if (result?.error === 'offender_not_found')  return res.status(404).json({ error: 'Player not found.' });
-    if (result?.error === 'no_matchup_data')     return res.status(404).json({ error: 'No matchup data found between these players this season.' });
-    if (result?.error === 'matchup_unavailable') return res.status(503).json({ error: 'Matchup data temporarily unavailable.' });
+    if (result?.error === 'defender_not_found') return res.status(404).json({ error: 'Defender not found.' });
+    if (result?.error === 'offender_not_found') return res.status(404).json({ error: 'Player not found.' });
+    if (result?.error === 'no_matchup_data')    return res.status(404).json({ error: 'No matchup data found between these players this season.' });
 
     res.json(result);
   } catch (err) { next(err); }
