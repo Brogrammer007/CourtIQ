@@ -19,6 +19,7 @@
     "express": "^4.19.2",
     "express-rate-limit": "^8.3.2",
     "morgan": "^1.10.0",
+    "sharp": "^0.34.5",
     "undici": "^8.1.0"
   }
 }

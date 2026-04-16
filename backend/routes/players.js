@@ -18,6 +18,7 @@ import {
 import { computeConfidence } from '../utils/confidence.js';
 import { getPlayerProps } from '../services/odds.js';
 import { getNextGame } from '../services/espn.js';
+import { renderPlayerOG } from '../services/og.js';
 // nbaStats import removed — matchup now computed from ESPN gamelog
 
 const TTL = Number(process.env.CACHE_TTL_SECONDS || 60);
@@ -67,6 +68,30 @@ async function loadPlayerStatPack(id) {
   const stats = raw.map((r) => normalizeStat(r, player?.team?.id));
   return { player, stats };
 }
+
+// OG image — 1200x630 PNG social card for a player.
+// Cached in-process for 30 minutes; downstream caches for 24h via Cache-Control.
+router.get('/player/:id/og.png', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const png = await cached(`og:${id}`, 1800, async () => {
+      const { player, stats } = await loadPlayerStatPack(id);
+      if (!player) throw Object.assign(new Error('Player not found'), { status: 404 });
+      return renderPlayerOG({
+        player,
+        averages: stats.length ? averages(stats) : null,
+        trend: stats.length ? trend(stats) : null,
+        prediction: stats.length ? predictPoints(stats) : null,
+      });
+    });
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+    res.send(png);
+  } catch (err) {
+    if (err.status === 404) return res.status(404).end();
+    next(err);
+  }
+});
 
 router.get('/player/:id/stats', async (req, res, next) => {
   try {

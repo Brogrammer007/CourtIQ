@@ -32,7 +32,11 @@ Two services:
 3. **Environment Variables**:
    ```
    VITE_API_BASE=https://<your-railway-domain>/api
+   API_BASE=https://<your-railway-domain>/api
    ```
+   `VITE_API_BASE` is baked into the client bundle at build time. `API_BASE`
+   is read at runtime by the Edge middleware / `api/og-meta.js` function that
+   serves per-player social cards. Set both.
 4. Deploy. Vercel will build → `dist/` → serve.
 
 ## 3. Wire the domain
