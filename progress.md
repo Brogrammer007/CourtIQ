@@ -7,6 +7,14 @@ on top within each section.
 
 ## ✅ Done
 
+### Deploy + viral OG + mobile sweep (Apr 16)
+- `frontend/vercel.json` rewritten: Vite preset, SPA rewrites that exclude file extensions (no more broken asset serving), immutable `Cache-Control` on PNG/SVG/webmanifest/ico/assets, 1h cache on robots/sitemap.
+- `backend/railway.json` + `.env.example` refresh — `RATE_LIMIT_MAX` surfaced, dev vs prod grouped, health check path documented.
+- `docs/DEPLOY.md` — step-by-step Railway backend + Vercel frontend guide, env var reference (`VITE_API_BASE` build-time + `API_BASE` runtime for edge), domain-wiring checklist, post-deploy smoke tests, cost breakdown (~$15–20/yr).
+- **Per-player OG images** (viral lever): `GET /api/player/:id/og.png` renders a 1200×630 PNG card (avatar initials, name/team/position, form trend, PPG/RPG/APG/FG% tiles, model projection banner) via `sharp` from a hand-crafted SVG template — no external fonts, 30 min in-process cache + 24h downstream.
+- **Crawler routing**: `frontend/middleware.js` (Vercel Edge) detects bot UAs hitting `/app/player/*` and 302s them to `frontend/api/og-meta.js` (Edge function) which returns minimal HTML with per-player OG/Twitter meta + `<meta refresh>` back to the SPA URL. Humans pass through untouched.
+- Mobile polish on Compare / Predictions / PropsPage: `px-4 sm:px-6`, hero headings scale `text-3xl sm:text-4xl`, top-picks header flex-wraps.
+
 ### Production hardening (Apr 16)
 - Rate limit on `/api/*` — 60 req/min per IP, configurable via `RATE_LIMIT_MAX`, health check stays unlimited. `trust proxy` set for Railway/Vercel edge.
 - ErrorBoundary at app + route level with glass fallback, "Try again" reset, dev-only stack message.
@@ -40,20 +48,19 @@ on top within each section.
 ## 🟡 Pending (ordered by impact)
 
 ### Must-have before launch
-1. **Deploy** — Vercel for frontend, Railway/Render for backend. Set `VITE_API_BASE` on frontend build env, `CORS_ORIGIN` on backend.
-2. **Domain** — purchase + wire DNS. Then replace `https://courtiq.app/` in `index.html`, `robots.txt`, `sitemap.xml` with the real domain.
-3. **og-image.png (1200×630)** — generic card used across all shares. Until it exists, OG previews will be blank.
+1. **Ship to Railway + Vercel** — follow `docs/DEPLOY.md`. Configs are committed; what's left is the actual clicks + setting `VITE_API_BASE`, `API_BASE`, `CORS_ORIGIN`.
+2. **Domain** — purchase + wire DNS. Then replace `https://courtiq.app/` in `index.html`, `robots.txt`, `sitemap.xml` with the real domain and redeploy.
+3. **Generic `og-image.png` (1200×630)** — fallback card used on landing + non-player routes. Per-player cards already work via `/api/player/:id/og.png`.
 
 ### High value, moderate effort
-4. **Per-player OG images** — backend endpoint that renders an image with ESPN headshot + stats; set `<meta property="og:image">` dynamically per player route. Biggest viral lever.
-5. **Analytics dashboard hookup** — verify Vercel Analytics events fire after deploy; optionally add custom events (favorite toggle, props view).
-6. **Mobile sweep on remaining pages** — Compare radar on 375px, Predictions card grid, PropsPage matchup section. PlayerPage is done.
+4. **Analytics dashboard hookup** — verify Vercel Analytics events fire after deploy; optionally add custom events (favorite toggle, props view).
+5. **Smoke-test OG previews** — paste a player URL into Twitter / iMessage / Slack after deploy, confirm the per-player card renders (tests middleware + edge fn + `/og.png` end-to-end).
 
 ### Nice-to-have
-7. **Favorites empty state** — current state not verified; confirm it shows helpful CTA when no favorites yet.
-8. **Skeleton → data transition** with `AnimatePresence` fade-in for smoother perceived loading.
-9. **Error telemetry** — pipe `ErrorBoundary.componentDidCatch` + API errors to Sentry (or just Vercel logs).
-10. **Schedule / game-day indicator** — show next game time on PlayerPage header.
+6. **Favorites empty state** — current state not verified; confirm it shows helpful CTA when no favorites yet.
+7. **Skeleton → data transition** with `AnimatePresence` fade-in for smoother perceived loading.
+8. **Error telemetry** — pipe `ErrorBoundary.componentDidCatch` + API errors to Sentry (or just Vercel logs).
+9. **Schedule / game-day indicator** — show next game time on PlayerPage header.
 
 ### Explicitly skipped (not worth the effort)
 - Light/dark toggle — design is dark-first, a light mode would look weak.
