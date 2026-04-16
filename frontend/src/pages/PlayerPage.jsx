@@ -10,6 +10,30 @@ import StatTile from '../components/StatTile.jsx';
 import { SkeletonCard, SkeletonLine } from '../components/Skeleton.jsx';
 import VsTeamSection from '../components/VsTeamSection.jsx';
 
+function PlayerHeadshot({ player }) {
+  const [imgError, setImgError] = useState(false);
+  const headshotUrl = `https://a.espncdn.com/i/headshots/nba/players/full/${player.id}.png`;
+
+  if (!imgError) {
+    return (
+      <div className="w-20 h-20 rounded-2xl overflow-hidden bg-grad-primary shadow-glow shrink-0">
+        <img
+          src={headshotUrl}
+          alt={`${player.first_name} ${player.last_name}`}
+          className="w-full h-full object-cover object-top"
+          onError={() => setImgError(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-20 h-20 rounded-2xl bg-grad-primary flex items-center justify-center text-2xl font-extrabold text-white shadow-glow shrink-0">
+      {player.first_name?.[0]}{player.last_name?.[0]}
+    </div>
+  );
+}
+
 export default function PlayerPage() {
   const { id } = useParams();
   const { isFavorite, toggleFavorite } = useStore();
@@ -91,9 +115,8 @@ export default function PlayerPage() {
       </Link>
 
       <div className="mt-6 glass p-6 md:p-8 flex flex-wrap items-center gap-6">
-        <div className="w-20 h-20 rounded-2xl bg-grad-primary flex items-center justify-center text-2xl font-extrabold text-white shadow-glow">
-          {player.first_name?.[0]}{player.last_name?.[0]}
-        </div>
+        <PlayerHeadshot player={player} />
+
         <div className="flex-1 min-w-0">
           <h1 className="text-3xl font-bold tracking-tight">
             {player.first_name} {player.last_name}

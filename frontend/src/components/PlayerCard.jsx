@@ -1,9 +1,34 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useStore } from '../store/useStore.js';
 
 function initials(p) {
   return `${p.first_name?.[0] ?? ''}${p.last_name?.[0] ?? ''}`.toUpperCase();
+}
+
+function PlayerAvatar({ player }) {
+  const [imgError, setImgError] = useState(false);
+  const headshotUrl = `https://a.espncdn.com/i/headshots/nba/players/full/${player.id}.png`;
+
+  if (!imgError) {
+    return (
+      <div className="w-12 h-12 rounded-xl overflow-hidden bg-grad-primary shadow-glow shrink-0">
+        <img
+          src={headshotUrl}
+          alt={`${player.first_name} ${player.last_name}`}
+          className="w-full h-full object-cover object-top"
+          onError={() => setImgError(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-12 h-12 rounded-xl bg-grad-primary flex items-center justify-center font-bold text-white shadow-glow shrink-0">
+      {initials(player)}
+    </div>
+  );
 }
 
 export default function PlayerCard({ player, index = 0 }) {
@@ -19,9 +44,7 @@ export default function PlayerCard({ player, index = 0 }) {
     >
       <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-grad-primary opacity-[0.15] blur-2xl group-hover:opacity-30 transition-opacity" />
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-grad-primary flex items-center justify-center font-bold text-white shadow-glow">
-          {initials(player)}
-        </div>
+        <PlayerAvatar player={player} />
         <div className="min-w-0 flex-1">
           <Link to={`/app/player/${player.id}`} className="block">
             <div className="font-semibold truncate hover:text-primary-soft transition-colors">
