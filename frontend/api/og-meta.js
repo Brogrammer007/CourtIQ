@@ -7,7 +7,9 @@ export const config = { runtime: 'edge' };
 
 // API_BASE is set as a Vercel environment variable (NOT the Vite one —
 // that's baked at build time and not available at runtime in edge).
-// Set this to e.g. https://courtiq-api.up.railway.app/api
+// For same-origin Vercel deployments (backend migrated to api/ functions),
+// set API_BASE to your Vercel domain, e.g. https://courtiq.vercel.app/api
+// The og.png route is served from the same deployment at /api/player/:id/og.png
 const API_BASE = process.env.API_BASE || process.env.VITE_API_BASE || '';
 
 function esc(s) {
