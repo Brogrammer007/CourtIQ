@@ -214,9 +214,9 @@ export default function Predictions() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
       <span className="chip">Model v1</span>
-      <h1 className="mt-3 text-4xl font-bold tracking-tight">Predictions</h1>
+      <h1 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight">Predictions</h1>
       <p className="text-slate-400 mt-1 text-sm">
         Pick any NBA player to see expected points and over/under probability for their next game.
       </p>
@@ -276,7 +276,7 @@ export default function Predictions() {
       </div>
 
       {/* Top picks grid */}
-      <div className="mt-10 flex items-center justify-between">
+      <div className="mt-10 flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg font-semibold">Top picks</h2>
         <span className="text-xs text-slate-400">Trending players · live model</span>
       </div>

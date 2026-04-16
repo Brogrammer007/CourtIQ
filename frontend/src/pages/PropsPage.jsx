@@ -305,7 +305,7 @@ export default function PropsPage() {
   if (err) {
     const is404 = /^404\b/.test(err);
     return (
-      <div className="mx-auto max-w-xl px-6 py-16">
+      <div className="mx-auto max-w-xl px-4 sm:px-6 py-16">
         <div className="glass p-8 text-center space-y-4">
           <div className="text-5xl">{is404 ? '🔍' : '⚠️'}</div>
           <h2 className="text-2xl font-bold gradient-text">
@@ -326,7 +326,7 @@ export default function PropsPage() {
   }
 
   if (!data) return (
-    <div className="mx-auto max-w-5xl px-6 py-10 space-y-6">
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10 space-y-6">
       <SkeletonLine className="w-40" />
       <div className="grid lg:grid-cols-2 gap-5">
         <SkeletonCard lines={6} />
@@ -338,7 +338,7 @@ export default function PropsPage() {
   const { player, next_game, props } = data;
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10 space-y-6">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 space-y-6">
       {/* Back link */}
       <Link
         to={`/app/player/${id}`}

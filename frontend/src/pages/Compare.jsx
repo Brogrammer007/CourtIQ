@@ -87,9 +87,9 @@ export default function Compare() {
       : null;
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
       <span className="chip">Compare</span>
-      <h1 className="mt-3 text-4xl font-bold tracking-tight">Side-by-side breakdown</h1>
+      <h1 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight">Side-by-side breakdown</h1>
       <p className="text-slate-400 mt-1 text-sm">Pick two players. See averages, form, and predictions head-to-head.</p>
 
       {loadingPlayers ? (
