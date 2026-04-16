@@ -28,14 +28,14 @@ function StatRow({ label, vsTeam, season, diff, emoji }) {
   const neutral = Math.abs(diff ?? 0) < 1;
   const color = neutral ? 'text-white' : up ? 'text-emerald-300' : 'text-rose-300';
   return (
-    <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-slate-300">{label}</span>
+    <div className="flex items-center justify-between gap-3 py-3 border-b border-white/5 last:border-0">
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="text-sm text-slate-300 truncate">{label}</span>
         {emoji && <span className="text-base">{emoji}</span>}
       </div>
-      <div className="flex items-center gap-3">
-        <span className={`text-xl font-bold tabular-nums ${color}`}>{vsTeam ?? '—'}</span>
-        <span className="text-xs text-slate-500 tabular-nums">/ {season ?? '—'} avg</span>
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <span className={`text-lg sm:text-xl font-bold tabular-nums ${color}`}>{vsTeam ?? '—'}</span>
+        <span className="hidden sm:inline text-xs text-slate-500 tabular-nums">/ {season ?? '—'} avg</span>
         <DiffBadge value={diff} />
       </div>
     </div>
@@ -93,7 +93,7 @@ export default function VsTeamSection({ playerId, player }) {
 
   return (
     <section className="mt-6">
-      <div className="glass p-6">
+      <div className="glass p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="chip">Matchup Analytics</div>
@@ -102,11 +102,11 @@ export default function VsTeamSection({ playerId, player }) {
               Filter games by opponent, compare to season averages, and surface matchup signals.
             </p>
           </div>
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <select
               value={teamId}
               onChange={(e) => setTeamId(e.target.value)}
-              className="appearance-none bg-transparent border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-sm outline-none focus:border-primary/60 min-w-[220px]"
+              className="appearance-none w-full sm:w-auto bg-transparent border border-white/10 rounded-xl pl-4 pr-10 py-2.5 text-sm outline-none focus:border-primary/60 sm:min-w-[220px]"
             >
               <option value="" className="bg-bg">Select opponent team…</option>
               {teams?.map((t) => (

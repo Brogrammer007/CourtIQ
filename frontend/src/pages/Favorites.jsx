@@ -18,10 +18,10 @@ export default function Favorites() {
   }, [favorites]);
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-10">
       <div>
         <span className="chip">Saved</span>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight">⭐ Favorites</h1>
+        <h1 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight">⭐ Favorites</h1>
         <p className="text-slate-400 mt-1 text-sm">Stored locally · persists across sessions</p>
       </div>
 

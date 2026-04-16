@@ -33,11 +33,11 @@ const features = [
 
 export default function Features() {
   return (
-    <section id="features" className="relative py-24">
-      <div className="mx-auto max-w-7xl px-6">
+    <section id="features" className="relative py-16 sm:py-20 lg:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="max-w-2xl">
           <span className="chip">Platform</span>
-          <h2 className="mt-4 text-4xl sm:text-5xl font-bold tracking-tight">
+          <h2 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
             Everything you need to <span className="gradient-text">decode the game</span>
           </h2>
           <p className="mt-4 text-slate-300">
@@ -46,7 +46,7 @@ export default function Features() {
           </p>
         </div>
 
-        <div className="mt-14 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="mt-10 sm:mt-14 grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {features.map((f, i) => (
             <motion.div
               key={f.title}

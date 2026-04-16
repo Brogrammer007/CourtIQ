@@ -54,11 +54,11 @@ export default function Preview() {
   ];
 
   return (
-    <section id="preview" className="relative py-24">
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="max-w-2xl mb-12">
+    <section id="preview" className="relative py-16 sm:py-20 lg:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="max-w-2xl mb-10 sm:mb-12">
           <span className="chip">Dashboard</span>
-          <h2 className="mt-4 text-4xl sm:text-5xl font-bold tracking-tight">
+          <h2 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
             Your <span className="gradient-text">analytics cockpit</span>
           </h2>
           <p className="mt-4 text-slate-300">
@@ -71,14 +71,14 @@ export default function Preview() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6 }}
-          className="glass p-6 md:p-8 relative overflow-hidden"
+          className="glass p-4 sm:p-6 md:p-8 relative overflow-hidden"
         >
           {/* Mock toolbar */}
           <div className="flex items-center gap-2 mb-5">
             <span className="w-3 h-3 rounded-full bg-rose-400/70" />
             <span className="w-3 h-3 rounded-full bg-amber-400/70" />
             <span className="w-3 h-3 rounded-full bg-emerald-400/70" />
-            <span className="ml-4 text-xs text-slate-400 font-mono">courtiq.app/dashboard</span>
+            <span className="ml-4 text-xs text-slate-400 font-mono truncate">courtiq.app/dashboard</span>
           </div>
 
           {/* Player slider tabs */}
@@ -105,9 +105,9 @@ export default function Preview() {
             </div>
           )}
 
-          <div className="grid lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {/* Bar chart — last 7 games */}
-            <div className="glass p-5 lg:col-span-2">
+            <div className="glass p-4 sm:p-5 sm:col-span-2 lg:col-span-2">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs uppercase tracking-[0.18em] text-slate-400">
@@ -175,7 +175,7 @@ export default function Preview() {
             </div>
 
             {/* Season averages panel */}
-            <div className="glass p-5 flex flex-col justify-between">
+            <div className="glass p-4 sm:p-5 sm:col-span-2 lg:col-span-1 flex flex-col justify-between">
               <div>
                 <div className="text-xs uppercase tracking-[0.18em] text-slate-400 mb-3">
                   Season Averages

@@ -16,11 +16,11 @@ export default function Hero() {
     <section className="relative overflow-hidden">
       {/* animated gradient orbs */}
       <div className="absolute inset-0 -z-10 pointer-events-none">
-        <div className="absolute top-20 left-1/4 w-[520px] h-[520px] rounded-full bg-primary/20 blur-[120px] animate-pulseGlow" />
-        <div className="absolute top-40 right-1/4 w-[440px] h-[440px] rounded-full bg-secondary/20 blur-[120px] animate-pulseGlow" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute top-20 left-1/4 w-[320px] h-[320px] sm:w-[520px] sm:h-[520px] rounded-full bg-primary/20 blur-[120px] animate-pulseGlow" />
+        <div className="absolute top-40 right-1/4 w-[280px] h-[280px] sm:w-[440px] sm:h-[440px] rounded-full bg-secondary/20 blur-[120px] animate-pulseGlow" style={{ animationDelay: '1.5s' }} />
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 pt-20 pb-28 grid lg:grid-cols-2 gap-12 items-center">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-10 sm:pt-16 lg:pt-20 pb-16 sm:pb-24 lg:pb-28 grid lg:grid-cols-2 gap-10 sm:gap-12 items-center">
         {/* Left: copy */}
         <div>
           <motion.span
@@ -36,7 +36,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
-            className="mt-5 text-5xl sm:text-6xl font-extrabold tracking-tight leading-[1.05]"
+            className="mt-5 text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.05]"
           >
             Unlock the <span className="gradient-text">Game</span> Behind the Game
           </motion.h1>
@@ -45,7 +45,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.16 }}
-            className="mt-5 text-lg text-slate-300 max-w-xl"
+            className="mt-5 text-base sm:text-lg text-slate-300 max-w-xl"
           >
             Analyze NBA players with powerful insights, real-time trends, and smart
             predictions — all in one platform.
@@ -68,12 +68,12 @@ export default function Hero() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="mt-10 flex items-center gap-6 text-xs text-slate-400"
+            className="mt-8 sm:mt-10 flex flex-wrap items-center gap-x-5 gap-y-2 sm:gap-6 text-xs text-slate-400"
           >
             <div><span className="text-white font-semibold">500+</span> active players tracked</div>
-            <div className="w-px h-4 bg-white/10" />
+            <div className="hidden sm:block w-px h-4 bg-white/10" />
             <div><span className="text-white font-semibold">30</span> NBA franchises</div>
-            <div className="w-px h-4 bg-white/10" />
+            <div className="hidden sm:block w-px h-4 bg-white/10" />
             <div><span className="text-white font-semibold">Live</span> data refresh</div>
           </motion.div>
         </div>
@@ -127,7 +127,7 @@ export default function Hero() {
           <motion.div
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute -left-6 -bottom-28 glass p-4 w-52 shadow-glowCyan"
+            className="hidden sm:block absolute -left-6 -bottom-28 glass p-4 w-52 shadow-glowCyan"
           >
             <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Form Index</div>
             <div className="text-2xl font-bold gradient-text mt-1">92 / 100</div>
@@ -142,7 +142,7 @@ export default function Hero() {
           <motion.div
             animate={{ y: [0, 10, 0] }}
             transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute -right-4 -top-4 glass p-4 w-44"
+            className="hidden sm:block absolute -right-4 -top-4 glass p-4 w-44"
           >
             <div className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Over 25.5 PTS</div>
             <div className="text-2xl font-bold text-emerald-300 mt-1">74%</div>

@@ -47,7 +47,7 @@ function PropCard({ title, prop }) {
   if (!prop) return null;
 
   return (
-    <div className="glass p-5 space-y-5">
+    <div className="glass p-4 sm:p-5 space-y-4 sm:space-y-5">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-sm uppercase tracking-widest text-slate-400">{title}</h3>
         {!prop.odds_available && (
@@ -58,20 +58,20 @@ function PropCard({ title, prop }) {
       </div>
 
       {/* Line + odds */}
-      <div className="flex items-baseline gap-4">
+      <div className="grid grid-cols-3 gap-3 items-end">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-slate-500">Line</div>
-          <div className="text-3xl font-bold">{prop.line ?? '—'}</div>
+          <div className="text-2xl sm:text-3xl font-bold tabular-nums">{prop.line ?? '—'}</div>
         </div>
         <div>
           <div className="text-[10px] uppercase tracking-widest text-slate-500">Over</div>
-          <div className={`text-lg font-semibold ${oddsColor(prop.over_odds)}`}>
+          <div className={`text-base sm:text-lg font-semibold tabular-nums ${oddsColor(prop.over_odds)}`}>
             {formatOdds(prop.over_odds)}
           </div>
         </div>
         <div>
           <div className="text-[10px] uppercase tracking-widest text-slate-500">Under</div>
-          <div className={`text-lg font-semibold ${oddsColor(prop.under_odds)}`}>
+          <div className={`text-base sm:text-lg font-semibold tabular-nums ${oddsColor(prop.under_odds)}`}>
             {formatOdds(prop.under_odds)}
           </div>
         </div>
@@ -167,7 +167,7 @@ function MatchupSection({ offenderId, playerPosition }) {
   };
 
   return (
-    <div className="glass p-5 space-y-5">
+    <div className="glass p-4 sm:p-5 space-y-4 sm:space-y-5">
       <div className="flex items-center gap-3">
         <h3 className="font-semibold text-sm uppercase tracking-widest text-slate-400">
           Defensive Matchup
@@ -338,7 +338,7 @@ export default function PropsPage() {
   const { player, next_game, props } = data;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 space-y-6">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-10 space-y-6">
       {/* Back link */}
       <Link
         to={`/app/player/${id}`}
@@ -351,9 +351,9 @@ export default function PropsPage() {
       </Link>
 
       {/* Header */}
-      <div className="glass p-5 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">{player.name}</h1>
+      <div className="glass p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold truncate">{player.name}</h1>
           <p className="text-slate-400 text-sm mt-0.5">Props & Confidence Analysis</p>
         </div>
         {next_game ? (

@@ -3,20 +3,20 @@ import { motion } from 'framer-motion';
 
 export default function CTA() {
   return (
-    <section id="cta" className="relative py-24">
-      <div className="mx-auto max-w-5xl px-6">
+    <section id="cta" className="relative py-16 sm:py-20 lg:py-24">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="relative rounded-2xl overflow-hidden p-10 md:p-16 text-center border border-white/10 shadow-glow"
+          className="relative rounded-2xl overflow-hidden p-8 sm:p-10 md:p-16 text-center border border-white/10 shadow-glow"
           style={{
             background:
               'radial-gradient(600px 300px at 20% 0%, rgba(139,92,246,0.35), transparent 60%), radial-gradient(600px 300px at 100% 100%, rgba(34,211,238,0.30), transparent 60%), #0D1220',
           }}
         >
-          <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
             Start analyzing <span className="gradient-text">like a pro</span>
           </h2>
           <p className="mt-4 text-slate-300 max-w-2xl mx-auto">

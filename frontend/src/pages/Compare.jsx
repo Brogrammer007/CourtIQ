@@ -87,7 +87,7 @@ export default function Compare() {
       : null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-10">
       <span className="chip">Compare</span>
       <h1 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight">Side-by-side breakdown</h1>
       <p className="text-slate-400 mt-1 text-sm">Pick two players. See averages, form, and predictions head-to-head.</p>
@@ -115,13 +115,13 @@ export default function Compare() {
 
       {result && radarData && (
         <>
-          <div className="mt-8 glass p-6">
+          <div className="mt-8 glass p-4 sm:p-6">
             <h3 className="font-semibold">Radar</h3>
-            <div className="flex items-center gap-4 text-xs mt-1 text-slate-400">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-1 text-slate-400">
               <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-primary" />{result.a.player?.first_name} {result.a.player?.last_name}</span>
               <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-secondary" />{result.b.player?.first_name} {result.b.player?.last_name}</span>
             </div>
-            <div className="h-80 mt-3">
+            <div className="h-64 sm:h-80 mt-3">
               <ResponsiveContainer>
                 <RadarChart data={radarData}>
                   <PolarGrid stroke="rgba(255,255,255,0.12)" />
@@ -138,16 +138,16 @@ export default function Compare() {
               const side = result[key];
               const accent = key === 'a' ? 'text-primary-soft' : 'text-secondary-soft';
               return (
-                <div key={key} className="glass p-5">
-                  <div className={`text-sm font-semibold ${accent}`}>
+                <div key={key} className="glass p-4 sm:p-5">
+                  <div className={`text-sm font-semibold ${accent} truncate`}>
                     {side.player?.first_name} {side.player?.last_name}
                   </div>
-                  <div className="text-xs text-slate-400">{side.player?.team?.full_name}</div>
+                  <div className="text-xs text-slate-400 truncate">{side.player?.team?.full_name}</div>
                   <div className="mt-4 grid grid-cols-3 gap-2 text-center">
                     {side.averages && Object.entries({ PTS: side.averages.pts, REB: side.averages.reb, AST: side.averages.ast, STL: side.averages.stl, BLK: side.averages.blk, 'FG%': (side.averages.fg_pct*100).toFixed(1) + '%' }).map(([k, v]) => (
                       <div key={k} className="rounded-lg bg-white/[0.04] border border-white/[0.06] p-2">
                         <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">{k}</div>
-                        <div className="text-lg font-bold">{v}</div>
+                        <div className="text-base sm:text-lg font-bold tabular-nums">{v}</div>
                       </div>
                     ))}
                   </div>

@@ -108,47 +108,50 @@ export default function PlayerPage() {
   }));
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-10">
       <Link to="/app" className="text-sm text-slate-400 hover:text-white inline-flex items-center gap-1.5">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
         Back to dashboard
       </Link>
 
-      <div className="mt-6 glass p-6 md:p-8 flex flex-wrap items-center gap-6">
-        <PlayerHeadshot player={player} />
-
-        <div className="flex-1 min-w-0">
-          <h1 className="text-3xl font-bold tracking-tight">
-            {player.first_name} {player.last_name}
-          </h1>
-          <div className="text-slate-400 mt-1">
-            {player.team?.full_name} · {player.position || '—'} · {player.height || '—'} · {player.weight || '—'} lbs
-          </div>
-          {trend && (
-            <div className="mt-3 inline-flex items-center gap-2 chip">
-              <span className={trend.direction === 'up' ? 'text-emerald-300' : trend.direction === 'down' ? 'text-rose-300' : 'text-slate-300'}>
-                {trend.direction === 'up' ? '▲' : trend.direction === 'down' ? '▼' : '•'} {trend.direction.toUpperCase()}
-              </span>
-              <span>Form {trend.form}/100</span>
+      <div className="mt-6 glass p-5 sm:p-6 md:p-8 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-4 sm:gap-6">
+        <div className="flex items-center gap-4 sm:gap-5 min-w-0">
+          <PlayerHeadshot player={player} />
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
+              {player.first_name} {player.last_name}
+            </h1>
+            <div className="text-slate-400 mt-1 text-sm sm:text-base">
+              {player.team?.full_name} · {player.position || '—'} · {player.height || '—'} · {player.weight || '—'} lbs
             </div>
-          )}
+            {trend && (
+              <div className="mt-3 inline-flex items-center gap-2 chip">
+                <span className={trend.direction === 'up' ? 'text-emerald-300' : trend.direction === 'down' ? 'text-rose-300' : 'text-slate-300'}>
+                  {trend.direction === 'up' ? '▲' : trend.direction === 'down' ? '▼' : '•'} {trend.direction.toUpperCase()}
+                </span>
+                <span>Form {trend.form}/100</span>
+              </div>
+            )}
+          </div>
         </div>
-        <button
-          onClick={() => toggleFavorite(Number(id))}
-          className={`btn-ghost ${fav ? 'text-yellow-300 border-yellow-400/40 bg-yellow-400/10' : ''}`}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8"><path d="M12 3l2.8 6.1 6.7.8-5 4.7 1.4 6.7L12 17.9 6.1 21.3l1.4-6.7-5-4.7 6.7-.8L12 3z" strokeLinejoin="round"/></svg>
-          {fav ? 'Favorited' : 'Add to Favorites'}
-        </button>
-        <Link
-          to={`/app/player/${id}/props`}
-          className="btn-ghost"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 20V10M12 20V4M6 20v-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Props & Confidence
-        </Link>
+        <div className="flex flex-wrap gap-2 sm:gap-3 sm:ml-auto">
+          <button
+            onClick={() => toggleFavorite(Number(id))}
+            className={`btn-ghost flex-1 sm:flex-initial ${fav ? 'text-yellow-300 border-yellow-400/40 bg-yellow-400/10' : ''}`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill={fav ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.8"><path d="M12 3l2.8 6.1 6.7.8-5 4.7 1.4 6.7L12 17.9 6.1 21.3l1.4-6.7-5-4.7 6.7-.8L12 3z" strokeLinejoin="round"/></svg>
+            <span className="truncate">{fav ? 'Favorited' : 'Favorite'}</span>
+          </button>
+          <Link
+            to={`/app/player/${id}/props`}
+            className="btn-ghost flex-1 sm:flex-initial"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 20V10M12 20V4M6 20v-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="truncate">Props</span>
+          </Link>
+        </div>
       </div>
 
       {/* Stat tiles */}
@@ -219,18 +222,18 @@ export default function PlayerPage() {
         <div className="glass p-5">
           <h3 className="font-semibold">Prediction</h3>
           {pred ? (
-            <div className="mt-3 grid grid-cols-3 gap-3">
-              <div className="rounded-xl bg-white/[0.04] border border-white/10 p-3">
-                <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Expected PTS</div>
-                <div className="text-2xl font-bold gradient-text mt-1">{pred.expected_points}</div>
+            <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
+              <div className="rounded-xl bg-white/[0.04] border border-white/10 p-2.5 sm:p-3">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Expected</div>
+                <div className="text-xl sm:text-2xl font-bold gradient-text mt-1">{pred.expected_points}</div>
               </div>
-              <div className="rounded-xl bg-white/[0.04] border border-white/10 p-3">
+              <div className="rounded-xl bg-white/[0.04] border border-white/10 p-2.5 sm:p-3">
                 <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Over {pred.line}</div>
-                <div className="text-2xl font-bold text-emerald-300 mt-1">{pred.over_probability}%</div>
+                <div className="text-xl sm:text-2xl font-bold text-emerald-300 mt-1">{pred.over_probability}%</div>
               </div>
-              <div className="rounded-xl bg-white/[0.04] border border-white/10 p-3">
+              <div className="rounded-xl bg-white/[0.04] border border-white/10 p-2.5 sm:p-3">
                 <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Under {pred.line}</div>
-                <div className="text-2xl font-bold text-rose-300 mt-1">{pred.under_probability}%</div>
+                <div className="text-xl sm:text-2xl font-bold text-rose-300 mt-1">{pred.under_probability}%</div>
               </div>
             </div>
           ) : (
