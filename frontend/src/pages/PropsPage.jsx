@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import ConfidenceMeter from '../components/ConfidenceMeter.jsx';
 import { SkeletonCard, SkeletonLine } from '../components/Skeleton.jsx';
+import Seo from '../components/Seo.jsx';
 
 // American odds (+150 / -110) → European decimal odds (2.50 / 1.91)
 function americanToDecimal(odds) {
@@ -349,6 +350,11 @@ export default function PropsPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-10 space-y-6">
+      <Seo
+        title={`${player.name} Props — Points, Rebounds, Assists Lines | CourtIQ`}
+        description={`Live prop lines, over/under odds, hit rates and confidence scores for ${player.name}'s next NBA game.`}
+        path={`/app/player/${id}/props`}
+      />
       {/* Back link */}
       <Link
         to={`/app/player/${id}`}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer } from 'recharts';
 import { api } from '../lib/api.js';
 import { SkeletonCard } from '../components/Skeleton.jsx';
+import Seo from '../components/Seo.jsx';
 
 function PlayerPicker({ label, value, onChange, options }) {
   return (
@@ -88,6 +89,11 @@ export default function Compare() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-10">
+      <Seo
+        title="Compare NBA Players Head-to-Head — Stats & Predictions | CourtIQ"
+        description="Side-by-side comparison of any two NBA players — averages, form, shooting splits, and next-game predictions."
+        path="/app/compare"
+      />
       <span className="chip">Compare</span>
       <h1 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight">Side-by-side breakdown</h1>
       <p className="text-slate-400 mt-1 text-sm">Pick two players. See averages, form, and predictions head-to-head.</p>

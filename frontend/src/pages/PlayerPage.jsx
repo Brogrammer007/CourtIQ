@@ -9,6 +9,7 @@ import { useStore } from '../store/useStore.js';
 import StatTile from '../components/StatTile.jsx';
 import { SkeletonCard, SkeletonLine } from '../components/Skeleton.jsx';
 import VsTeamSection from '../components/VsTeamSection.jsx';
+import Seo from '../components/Seo.jsx';
 
 function InjuryBanner({ availability }) {
   const injury = availability?.injury;
@@ -156,8 +157,37 @@ export default function PlayerPage() {
     pts: s.pts, ast: s.ast, reb: s.reb,
   }));
 
+  const fullName = `${player.first_name} ${player.last_name}`;
+  const teamName = player.team?.full_name || player.team?.abbreviation || 'NBA';
+  const pos = player.position || 'Player';
+  const headshot = `https://a.espncdn.com/i/headshots/nba/players/full/${player.id}.png`;
+  const personLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: fullName,
+    givenName: player.first_name,
+    familyName: player.last_name,
+    jobTitle: `${pos} · ${teamName}`,
+    image: headshot,
+    affiliation: player.team?.full_name
+      ? { '@type': 'SportsTeam', name: player.team.full_name }
+      : undefined,
+    url: `https://courtiq.app/app/player/${player.id}`,
+  };
+  const seoDesc = avgs
+    ? `${fullName} (${teamName}, ${pos}) — averaging ${avgs.pts} PTS, ${avgs.reb} REB, ${avgs.ast} AST. Live stats, form trends and next-game predictions on CourtIQ.`
+    : `${fullName} (${teamName}, ${pos}) — live NBA stats, form trends, props and next-game predictions on CourtIQ.`;
+
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-10">
+      <Seo
+        title={`${fullName} Stats, Props & Predictions — CourtIQ`}
+        description={seoDesc}
+        path={`/app/player/${player.id}`}
+        image={headshot}
+        type="profile"
+        jsonLd={personLd}
+      />
       <Link to="/app" className="text-sm text-slate-400 hover:text-white inline-flex items-center gap-1.5">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" /></svg>
         Back to dashboard

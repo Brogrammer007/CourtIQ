@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api.js';
 import { SkeletonCard } from '../components/Skeleton.jsx';
+import Seo from '../components/Seo.jsx';
 
 // ---- Small, reusable player-search typeahead ------------------------------
 
@@ -215,6 +216,11 @@ export default function Predictions() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 sm:py-10">
+      <Seo
+        title="NBA Player Predictions — Next-Game Points & Over/Under | CourtIQ"
+        description="Expected points, over/under probability and form trends for any NBA player's next game."
+        path="/app/predictions"
+      />
       <span className="chip">Model v1</span>
       <h1 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight">Predictions</h1>
       <p className="text-slate-400 mt-1 text-sm">

@@ -3,6 +3,7 @@ import { api } from '../lib/api.js';
 import PlayerCard from '../components/PlayerCard.jsx';
 import { SkeletonCard } from '../components/Skeleton.jsx';
 import StatTile from '../components/StatTile.jsx';
+import Seo from '../components/Seo.jsx';
 import { motion } from 'framer-motion';
 
 const REFRESH_MS = 15000;
@@ -111,6 +112,11 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 sm:py-10">
+      <Seo
+        title="NBA Player Dashboard — Search Stats & Trends | CourtIQ"
+        description="Search any NBA player and explore live averages, recent form, and trending players — powered by ESPN data."
+        path="/app"
+      />
       <div className="flex flex-wrap items-end justify-between gap-4 sm:gap-6">
         <div className="min-w-0">
           <span className="chip">
