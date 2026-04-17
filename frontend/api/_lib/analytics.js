@@ -97,9 +97,13 @@ export function predictPoints(stats) {
   const momentum = expected - priorAvg;
   const projected = +(expected + momentum * 0.3).toFixed(1);
 
-  // Over/under 25.5 probability (demo). Derived from distribution around projected.
+  // Per-player line: rolling 10-game average rounded to nearest 0.5 (standard prop-line format).
+  // This matches projectedLine() used in the props endpoint.
+  const last10 = stats.slice(0, 10);
+  const avg10 = last10.reduce((sum, s) => sum + (s.pts ?? 0), 0) / last10.length;
+  const line = Math.round(avg10 * 2) / 2;
+
   const spread = 6; // points
-  const line = 25.5;
   const z = (projected - line) / spread;
   const overProb = Math.round(100 * sigmoid(z));
   return {
