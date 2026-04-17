@@ -4,14 +4,24 @@ import { api } from '../lib/api.js';
 import ConfidenceMeter from '../components/ConfidenceMeter.jsx';
 import { SkeletonCard, SkeletonLine } from '../components/Skeleton.jsx';
 
-function formatOdds(odds) {
-  if (odds == null) return '—';
-  return odds > 0 ? `+${odds}` : String(odds);
+// American odds (+150 / -110) → European decimal odds (2.50 / 1.91)
+function americanToDecimal(odds) {
+  if (odds == null) return null;
+  if (odds > 0)  return 1 + odds / 100;
+  if (odds < 0)  return 1 + 100 / Math.abs(odds);
+  return null;
 }
 
+function formatOdds(odds) {
+  const d = americanToDecimal(odds);
+  return d == null ? '—' : d.toFixed(2);
+}
+
+// Highlight value bets — anything above 2.00 is "plus money" in decimal.
 function oddsColor(odds) {
-  if (odds == null) return 'text-slate-400';
-  return odds > 0 ? 'text-emerald-300' : 'text-white';
+  const d = americanToDecimal(odds);
+  if (d == null) return 'text-slate-400';
+  return d >= 2 ? 'text-emerald-300' : 'text-white';
 }
 
 function HitRateBar({ hitRate, sample, line }) {

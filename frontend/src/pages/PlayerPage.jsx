@@ -10,6 +10,55 @@ import StatTile from '../components/StatTile.jsx';
 import { SkeletonCard, SkeletonLine } from '../components/Skeleton.jsx';
 import VsTeamSection from '../components/VsTeamSection.jsx';
 
+function InjuryBanner({ availability }) {
+  const injury = availability?.injury;
+  if (!injury) return null;
+
+  const isOut = availability.out_for_next_game;
+  const tone = isOut
+    ? 'border-rose-400/30 bg-rose-400/10 text-rose-200'
+    : 'border-amber-400/30 bg-amber-400/10 text-amber-200';
+
+  // Normalize status: "Day-To-Day" → "Day-to-Day"
+  const statusLabel = injury.status
+    ? injury.status.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('-')
+    : isOut ? 'Out' : 'Injury update';
+
+  const fmtDate = (iso) => {
+    if (!iso) return null;
+    const d = new Date(iso);
+    return isNaN(d) ? null : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  };
+  const retDate = fmtDate(injury.return_date);
+
+  return (
+    <div className={`mt-4 glass border ${tone} p-4 sm:p-5 flex items-start gap-3`}>
+      <div className="text-xl shrink-0 leading-none pt-0.5">{isOut ? '🚫' : '⚠️'}</div>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="font-semibold text-sm sm:text-base">
+            {isOut ? 'Out for next game' : statusLabel}
+          </span>
+          {injury.type && (
+            <span className="text-[11px] uppercase tracking-wider opacity-80">· {injury.type}</span>
+          )}
+          {retDate && (
+            <span className="text-[11px] uppercase tracking-wider opacity-80">· Est. return {retDate}</span>
+          )}
+          {injury.fantasy_status && injury.fantasy_status !== 'OUT' && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-md border border-white/20 opacity-90">
+              {injury.fantasy_status}
+            </span>
+          )}
+        </div>
+        {injury.short_comment && (
+          <p className="text-xs sm:text-sm opacity-90 mt-1 leading-relaxed">{injury.short_comment}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PlayerHeadshot({ player }) {
   const [imgError, setImgError] = useState(false);
   const headshotUrl = `https://a.espncdn.com/i/headshots/nba/players/full/${player.id}.png`;
@@ -153,6 +202,9 @@ export default function PlayerPage() {
           </Link>
         </div>
       </div>
+
+      {/* Injury / availability banner */}
+      <InjuryBanner availability={statsRes?.availability} />
 
       {/* Stat tiles */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">

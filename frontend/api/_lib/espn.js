@@ -218,3 +218,63 @@ export async function getNextGame(teamId) {
 
   return null;
 }
+
+// ---- Injuries --------------------------------------------------------------
+// ESPN exposes a single league-wide injuries endpoint grouped by team. We fetch
+// it once and build a Map<athleteId, injury> cached at module scope. Refreshes
+// every 10 minutes during warm invocations.
+
+const INJURIES_URL = 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries';
+const INJURY_TTL = 10 * 60 * 1000; // 10 min
+let injuryMap = null;
+let injuryFetchedAt = 0;
+
+function idFromHeadshot(href) {
+  const m = (href || '').match(/\/players\/full\/(\d+)\.png/);
+  return m ? Number(m[1]) : null;
+}
+
+async function ensureInjuries() {
+  if (injuryMap && Date.now() - injuryFetchedAt < INJURY_TTL) return injuryMap;
+  try {
+    const res = await fetch(INJURIES_URL);
+    if (!res.ok) throw new Error(`ESPN injuries ${res.status}`);
+    const data = await res.json();
+    const map = new Map();
+    for (const team of (data.injuries || [])) {
+      for (const inj of (team.injuries || [])) {
+        const athleteId = idFromHeadshot(inj.athlete?.headshot?.href);
+        if (!athleteId) continue;
+        map.set(athleteId, {
+          status: inj.status || null,                         // "Day-To-Day" | "Out" | "Questionable" ...
+          short_comment: inj.shortComment || '',
+          type: inj.details?.type || null,                    // "Illness" | "Rest" | "Knee" ...
+          return_date: inj.details?.returnDate || null,       // ISO date or null
+          fantasy_status: inj.details?.fantasyStatus?.abbreviation || null, // "GTD" | "OUT" ...
+          date: inj.date || null,
+        });
+      }
+    }
+    injuryMap = map;
+    injuryFetchedAt = Date.now();
+  } catch {
+    // Keep stale map on fetch failure
+    if (!injuryMap) injuryMap = new Map();
+  }
+  return injuryMap;
+}
+
+// Returns injury info for a player, or null if healthy / not found.
+export async function getPlayerInjury(playerId) {
+  const map = await ensureInjuries();
+  return map.get(Number(playerId)) || null;
+}
+
+// Returns true if the player's scheduled next game falls before their return_date.
+export function isOutForNextGame(injury, nextGame) {
+  if (!injury) return false;
+  if (injury.status === 'Out') return true;
+  if (injury.fantasy_status === 'OUT') return true;
+  if (injury.return_date && nextGame?.date && nextGame.date < injury.return_date) return true;
+  return false;
+}
