@@ -172,7 +172,7 @@ export default function PlayerPage() {
     affiliation: player.team?.full_name
       ? { '@type': 'SportsTeam', name: player.team.full_name }
       : undefined,
-    url: `https://courtiq.app/app/player/${player.id}`,
+    url: `https://nbacourtiq.org/app/player/${player.id}`,
   };
   const seoDesc = avgs
     ? `${fullName} (${teamName}, ${pos}) — averaging ${avgs.pts} PTS, ${avgs.reb} REB, ${avgs.ast} AST. Live stats, form trends and next-game predictions on CourtIQ.`

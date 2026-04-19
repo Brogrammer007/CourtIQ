@@ -8,8 +8,8 @@ const organizationLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'CourtIQ',
-  url: 'https://courtiq.app',
-  logo: 'https://courtiq.app/logo.svg',
+  url: 'https://nbacourtiq.org',
+  logo: 'https://nbacourtiq.org/logo.svg',
   description: 'NBA player analytics, predictions and matchup insights.',
 };
 
@@ -17,12 +17,12 @@ const websiteLd = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: 'CourtIQ',
-  url: 'https://courtiq.app',
+  url: 'https://nbacourtiq.org',
   potentialAction: {
     '@type': 'SearchAction',
     target: {
       '@type': 'EntryPoint',
-      urlTemplate: 'https://courtiq.app/app?search={search_term_string}',
+      urlTemplate: 'https://nbacourtiq.org/app?search={search_term_string}',
     },
     'query-input': 'required name=search_term_string',
   },

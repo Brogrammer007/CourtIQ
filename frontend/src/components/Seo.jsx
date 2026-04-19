@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 
-const SITE = 'https://courtiq.app';
+const SITE = 'https://nbacourtiq.org';
 const DEFAULT_OG = `${SITE}/og-image.png`;
 
 /**
